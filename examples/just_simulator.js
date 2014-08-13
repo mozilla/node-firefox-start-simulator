@@ -2,6 +2,7 @@ var startB2G = require('../index');
 var FirefoxClient = require('firefox-client');
 
 startB2G({port:7653, connect:false}, function(err, sim) {
+
   var client = new FirefoxClient();
 
   // Let's show for example all the running apps

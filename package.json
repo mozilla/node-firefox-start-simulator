@@ -21,6 +21,8 @@
     "firefox-client": "^0.2.0",
     "moz-discover-ports": "0.0.6",
     "moz-find-b2g": "^0.0.5",
+    "portfinder": "^0.2.1",
+    "q": "^1.0.1",
     "shelljs": "^0.3.0"
   }
 }
