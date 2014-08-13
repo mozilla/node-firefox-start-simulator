@@ -1,6 +1,6 @@
 {
   "name": "moz-start-b2g",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
   "scripts": {
@@ -18,8 +18,9 @@
   "homepage": "https://github.com/nicola/moz-start-b2g",
   "dependencies": {
     "async": "^0.9.0",
+    "firefox-client": "^0.2.0",
     "moz-discover-ports": "0.0.6",
-    "moz-find-b2g": "^0.0.4",
+    "moz-find-b2g": "^0.0.5",
     "shelljs": "^0.3.0"
   }
 }
