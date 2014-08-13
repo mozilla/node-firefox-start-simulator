@@ -6,6 +6,7 @@ startB2G({port:7653}, function(err, client) {
   client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
       console.log("Running apps:", apps);
+      client.disconnect();
     });
   });
 

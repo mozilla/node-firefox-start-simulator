@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var findB2G = require('moz-find-b2g');
+var net = require('net');
 var discoverPorts = require('moz-discover-ports');
 var exec = require('shelljs').exec;
 var async = require('async');
@@ -9,6 +10,18 @@ var FirefoxClient = require("firefox-client");
 
 module.exports = startB2G;
 
+function whenPortReady(port, cb) {
+  var sock = new net.Socket();
+  sock.on('connect', function() {
+      sock.destroy();
+      cb();
+  }).on('error', function(e) {
+      setTimeout(function() {
+        whenPortReady(port, cb);
+      }, 1000);
+  }).connect(port,'localhost');
+}
+
 function startB2G (opts, callback) {
 
   function _startB2G(opts, done) {
@@ -16,7 +29,6 @@ function startB2G (opts, callback) {
     if (opened_ports.b2g.indexOf(opts.port) > -1) {
       return done(null, opts);
     }
-
 
     async.waterfall([
       function(next) {
@@ -40,15 +52,18 @@ function startB2G (opts, callback) {
 
   _startB2G(opts, function(err, b2g_instance) {
 
+    whenPortReady(opts.port, function() {
+
       if (opts.connect === false) {
         return callback(err, b2g_instance);
       }
 
-      // TODO wait a bit to make sure sim is on!
       var client = new FirefoxClient();
       client.connect(opts.port, function(err) {
         callback(err, client);
       });
+
+    });
 
   });
 

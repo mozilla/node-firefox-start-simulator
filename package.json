@@ -1,6 +1,6 @@
 {
   "name": "moz-start-b2g",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
   "scripts": {
