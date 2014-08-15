@@ -1,6 +1,6 @@
 var startB2G = require('../index');
 
-startB2G({port:7653}, function(err, client) {
+startB2G({port:8002}, function(err, client) {
   // Let's show for example all the running apps
 
   client.getWebapps(function(err, webapps) {

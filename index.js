@@ -17,14 +17,10 @@ function portIsReady(port, cb) {
 
   function ping(defer) {
     var sock = new net.Socket();
-    sock.setTimeout(5000);
     sock
       .on('connect', function() {
         sock.destroy();
         defer.resolve();
-      })
-      .on('timeout', function(e) {
-        defer.reject(new Error(e));
       })
       .on('error', function(e) {
         setTimeout(function() {
@@ -48,78 +44,111 @@ function runB2G(opts, callback) {
 }
 
 function getPort (opts, found) {
+  var deferred = Q.defer();
+
   var opened_ports = discoverPorts().b2g;
 
   if (opened_ports.length > 0) {
-    found(null, opened_ports[0]);
+    if (found) found(null, opened_ports[0]);
+    deferred.resolve(opened_ports[0]);
   } else {
-    portfinder.getPort(found);
+    portfinder.getPort(function(err, port){
+      if (found) found(err, port);
+      deferred.resolve(port);
+    });
   }
+
+  return deferred.promise;
 }
 
-function startB2G (opts, done) {
+function findB2GPromise (opts) {
+  var deferred = Q.defer();
+  findB2G(opts, deferred.makeNodeResolver());
+  return deferred.promise;
+}
 
-  var defer = Q.defer();
+function startB2G (opts, callback) {
 
+  var promise = Q();
+
+  // startB2G(callback)
   if (typeof opts == 'function') {
-    done = opts;
+    callback = opts;
     opts = {};
   }
 
-  var opened_ports = discoverPorts().b2g;
-
-  // If no port is specified, find a port and restart
-  if (!opts.port)
-    return getPort(opts, function(err, port) {
-      opts.port = port;
-      return startB2G(opts, done);
-    });
-
-
-  Q.Promise(function(resolve, reject, notify) {
-    // A simulator is open on the same port, we use it
-    if (opened_ports.indexOf(opts.port) > -1) {
-      return resolve(opts);
-    }
-    // Otherwise we start one with settings we want
-    else if (opts.bin && opts.profile) {
-      return resolve(opts);
-    }
-    // Or we start one.
-    else {
-      findB2G(opts, function(err, b2gs) {
+  // If no b2g paths configs
+  if (!opts.bin || !opts.profile) {
+    var pathsReady = findB2GPromise(opts)
+      .then(function(b2gs) {
         opts.bin = b2gs[0].bin;
         opts.profile = b2gs[0].profile;
-        runB2G(opts).then(resolve);
+    });
+
+    promise = Q.all([promise, pathsReady]);
+  }
+
+  // If no port
+  if (!opts.port) {
+    var portReady = getPort(opts)
+      .then(function(port) {
+        opts.port = port;
       });
-    }
-  })
-  .then(function() {
-    return portIsReady(opts.port);
-  })
-  .then(function() {
-    if (opts.connect === false) {
-      if (done) done(null, opts);
-      defer.resolve(opts);
-    }
-    else {
-      var client = new FirefoxClient();
-      client.connect(opts.port, function(err) {
-        if (done) done(err, client);
-        defer.resolve(client);
-      });
-    }
-  });
+
+    promise = Q.all([promise, portReady]);
+  }
+
+  // If port is already open stop here
+  var opened_ports = discoverPorts().b2g;
+
+  return promise
+    .then(function() {
+      if (opened_ports.indexOf(opts.port) == -1) {
+        return runB2G(opts)
+          .then(function() {
+            console.log(opts)
+            return portIsReady(opts.port);
+          });
+      } else {
+        return Q();
+      }
+    })
+    .then(function() {
+      return _startB2G(opts, callback);
+    });
+
+}
+
+function _startB2G (opts, callback) {
+
+  var defer = Q.defer();
+  
+  Q()
+    .then(function() {
+      if (opts.connect === false) {
+        if (callback) callback(null, opts);
+        defer.resolve(opts);
+      }
+      else {
+        var client = new FirefoxClient();
+        client.connect(opts.port, function(err) {
+          if (callback) callback(err, client);
+          defer.resolve(client);
+        });
+      }
+    }).done()
   
   return defer.promise;
 }
 
 if (require.main === module) {
   (function() {
-    startB2G({port:7653}, function(err, client){
+    startB2G({port:12345}, function(err, client){
       if (err) return console.err("err", err);
-      console.log("Connected and disconnected")
+      console.log("Connected and disconnected");
       client.disconnect();
+    }).catch(function(err) {
+      console.log("big error", err);
     });
   })();
 }
