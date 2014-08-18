@@ -89,8 +89,10 @@ function startB2G (opts, callback) {
   if (!opts.bin || !opts.profile) {
     var pathsReady = findB2GPromise(opts)
       .then(function(b2gs) {
-        opts.bin = b2gs[0].bin;
-        opts.profile = b2gs[0].profile;
+        var latestB2g = b2gs[b2gs.length - 1];
+
+        opts.bin = latestB2g.bin;
+        opts.profile = latestB2g.profile;
     });
 
     promise = Q.all([promise, pathsReady]);
@@ -116,7 +118,6 @@ function startB2G (opts, callback) {
       if (opened_ports.indexOf(opts.port) == -1) {
         return runB2G(opts)
           .then(function() {
-            console.log(opts)
             return portIsReady(opts.port);
           });
       }
@@ -148,7 +149,7 @@ function _startB2G (opts, callback) {
           defer.resolve(client);
         });
       }
-    }).done()
+    }).done();
   
   return defer.promise;
 }
