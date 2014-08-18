@@ -77,6 +77,14 @@ function startB2G (opts, callback) {
     opts = {};
   }
 
+  // if client is passed, no need to start
+  if (opts.client) {
+    return promise.then(function() {
+      if (callback) callback(null, opts.client);
+      return opts.client;
+    });
+  }
+
   // If no b2g paths configs
   if (!opts.bin || !opts.profile) {
     var pathsReady = findB2GPromise(opts)
@@ -103,13 +111,17 @@ function startB2G (opts, callback) {
 
   return promise
     .then(function() {
+
+      // Port is not open
       if (opened_ports.indexOf(opts.port) == -1) {
         return runB2G(opts)
           .then(function() {
             console.log(opts)
             return portIsReady(opts.port);
           });
-      } else {
+      }
+      // Port already open
+      else {
         return Q();
       }
     })
