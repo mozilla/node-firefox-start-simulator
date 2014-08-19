@@ -33,7 +33,7 @@ Just start a B2G without opening a connection:
 var startB2G = require('moz-start-b2g');
 startB2G({port:1234, connect:false}, function(err) {
   // Let's show for example all the running apps
-  client.connect(7653, function() {
+  client.connect(1234, function() {
     client.getWebapps(function(err, webapps) {
       webapps.listRunningApps(function(err, apps) {
         console.log("Running apps:", apps);
