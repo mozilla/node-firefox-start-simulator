@@ -159,7 +159,6 @@ if (require.main === module) {
     startB2G({port:12345}, function(err, client){
       if (err) return console.err("err", err);
       console.log("Connected and disconnected");
-      client.disconnect();
     }).catch(function(err) {
       console.log("big error", err);
     });
