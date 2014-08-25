@@ -34,12 +34,49 @@ function portIsReady(port, cb) {
   return defer.promise;
 }
 
-function runB2G(opts, callback) {
+function commandB2G(opts, callback) {
   var defer = Q.defer();
   var command = '"' + opts.bin + '" -profile "' + opts.profile + '" -start-debugger-server ' + opts.port + ' -no-remote';
   var output = exec(command, {silent: true, async:true}).output;
   if (callback) callback(null, opts);
   defer.resolve(opts);
+  return defer.promise;
+}
+
+function runB2G (opts) {
+  var opened_ports = discoverPorts().b2g;
+
+  // Port is not open
+  if (opened_ports.indexOf(opts.port) == -1) {
+    return commandB2G(opts)
+      .then(function() {
+        return portIsReady(opts.port);
+      });
+  }
+  // Port already open
+  else {
+    return Q();
+  }
+}
+
+function connectB2G (opts, callback) {
+
+  var defer = Q.defer();
+
+  if (opts.connect === false) {
+    if (callback) callback(null, opts);
+    defer.resolve(opts);
+  }
+  else {
+    var client = new FirefoxClient();
+    client.connect(opts.port, function(err) {
+      if (err) return defer.reject(err);
+      opts.client = opts.client || client;
+      if (callback) callback(err, client);
+      defer.resolve(client);
+    });
+  }
+
   return defer.promise;
 }
 
@@ -67,92 +104,72 @@ function findB2GPromise (opts) {
   return deferred.promise;
 }
 
-function startB2G (opts, callback) {
+function findPaths (opts) {
+  return findB2GPromise(opts).then(function(b2gs) {
+    var latestB2G = b2gs[b2gs.length - 1];
+    return {
+      bin: latestB2G.bin,
+      profile: latestB2G.profile
+    };
+  });
+}
+
+function findPort (opts) {
+  return getPort(opts).then(function(port) {
+    return port;
+  });
+}
+
+function startB2G () {
+
+  var args = arguments;
+  var opts = {};
+  var callback;
 
   var promise = Q();
 
-  // startB2G(callback)
-  if (typeof opts == 'function') {
-    callback = opts;
-    opts = {};
+  /* Overloading */
+
+  // startB2G(opts [, callback])
+  if (typeof args[0] == 'object') {
+    opts = args[0];
   }
+
+  // startB2G(..., callback)
+  if (typeof args[args.length-1] == 'function') {
+    callback = args[args.length-1];
+  }
+
+  /* Options */
 
   // if client is passed, no need to start
   if (opts.client) {
-    return promise.then(function() {
+    return Q().then(function() {
       if (callback) callback(null, opts.client);
       return opts.client;
     });
   }
 
-  // If no b2g paths configs
-  if (!opts.bin || !opts.profile) {
-    var pathsReady = findB2GPromise(opts)
-      .then(function(b2gs) {
-        var latestB2g = b2gs[b2gs.length - 1];
+  /* Promises */
 
-        opts.bin = latestB2g.bin;
-        opts.profile = latestB2g.profile;
+  // Make sure we have bin, profile and port
+  var pathsReady = (opts.bin && opts.profile) || findPaths(opts);
+  var portReady = opts.port || findPort(opts);
+
+  var ready = Q.all([pathsReady, portReady])
+    .spread(function(paths, port) {
+      if (!opts.bin) opts.bin = paths.bin;
+      if (!opts.profile) opts.profile = paths.profile;
+      if (!opts.port) opts.port = port;
     });
-
-    promise = Q.all([promise, pathsReady]);
-  }
-
-  // If no port
-  if (!opts.port) {
-    var portReady = getPort(opts)
-      .then(function(port) {
-        opts.port = port;
-      });
-
-    promise = Q.all([promise, portReady]);
-  }
 
   // If port is already open stop here
-  var opened_ports = discoverPorts().b2g;
 
-  return promise
-    .then(function() {
 
-      // Port is not open
-      if (opened_ports.indexOf(opts.port) == -1) {
-        return runB2G(opts)
-          .then(function() {
-            return portIsReady(opts.port);
-          });
-      }
-      // Port already open
-      else {
-        return Q();
-      }
-    })
-    .then(function() {
-      return _startB2G(opts, callback);
-    });
+  return ready
+    .then(runB2G.bind(null, opts))
+    .then(connectB2G.bind(null, opts, callback));
 
-}
-
-function _startB2G (opts, callback) {
-
-  var defer = Q.defer();
-  
-  Q()
-    .then(function() {
-      if (opts.connect === false) {
-        if (callback) callback(null, opts);
-        defer.resolve(opts);
-      }
-      else {
-        var client = new FirefoxClient();
-        client.connect(opts.port, function(err) {
-          opts.client = opts.client || client;
-          if (callback) callback(err, client);
-          defer.resolve(client);
-        });
-      }
-    }).done();
-  
-  return defer.promise;
 }
 
 if (require.main === module) {
@@ -161,7 +178,7 @@ if (require.main === module) {
       if (err) return console.err("err", err);
       console.log("Connected and disconnected");
     }).catch(function(err) {
-      console.log("big error", err);
+      console.log("big error", err.stack);
     });
   })();
 }
