@@ -145,6 +145,7 @@ function _startB2G (opts, callback) {
       else {
         var client = new FirefoxClient();
         client.connect(opts.port, function(err) {
+          opts.client = opts.client || client;
           if (callback) callback(err, client);
           defer.resolve(client);
         });
