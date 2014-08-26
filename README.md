@@ -1,11 +1,11 @@
-# moz-start-b2g
+# fxos-start
 
 Start a FirefoxOS simulator if no simulator is running.
 
 ## Install
 
 ```
-$ npm install moz-start-b2g
+$ npm install fxos-start
 ```
 
 ## Usage
@@ -13,10 +13,10 @@ $ npm install moz-start-b2g
 
 ### Start a simulator on known port, connect and return client
 
-Start a B2G and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
+Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
 ```javascript
-var startB2G = require('moz-start-b2g');
-startB2G({port:1234}, function(err, client) {
+var start = require('fxos-start');
+start({port:1234}, function(err, client) {
   // Let's show for example all the running apps
   client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
@@ -27,11 +27,11 @@ startB2G({port:1234}, function(err, client) {
 ```
 
 ### Start a simulator on known port without connecting
-Just start a B2G without opening a connection:
+Just start a FirefoxOS simulator without opening a connection:
 
 ```javascript
-var startB2G = require('moz-start-b2g');
-startB2G({port:1234, connect:false}, function(err) {
+var start = require('fxos-start');
+start({port:1234, connect:false}, function(err) {
   // Let's show for example all the running apps
   client.connect(1234, function() {
     client.getWebapps(function(err, webapps) {
@@ -44,11 +44,11 @@ startB2G({port:1234, connect:false}, function(err) {
 ```
 
 ### Start a simulator on any port
-Just start a B2G without opening a connection:
+Just start a  without opening a connection:
 
 ```javascript
-var startB2G = require('moz-start-b2g');
-startB2G(function(err, client) {
+var start = require('fxos-start');
+start(function(err, client) {
   // Let's show for example all the running apps
 
   client.getWebapps(function(err, webapps) {

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-var findB2G = require('moz-find-b2g');
+var findB2G = require('fxos-simulators');
 var Q = require('q');
 var net = require('net');
-var discoverPorts = require('moz-discover-ports');
+var discoverPorts = require('fx-ports');
 var exec = require('shelljs').exec;
 var async = require('async');
 var FirefoxClient = require("firefox-client");
