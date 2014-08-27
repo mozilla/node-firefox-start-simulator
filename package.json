@@ -1,6 +1,6 @@
 {
   "name": "fxos-start",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
   "scripts": {
@@ -21,8 +21,12 @@
     "firefox-client": "^0.2.3",
     "fx-ports": "^0.1.0",
     "fxos-simulators": "^0.1.0",
+    "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",
     "q": "^1.0.1",
     "shelljs": "^0.3.0"
+  },
+  "bin": {
+    "fxos-start": "./bin/fxos-start.js"
   }
 }

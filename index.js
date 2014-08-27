@@ -171,14 +171,3 @@ function startB2G () {
     .then(connectB2G.bind(null, opts, callback));
 
 }
-
-if (require.main === module) {
-  (function() {
-    startB2G({port:12345}, function(err, client){
-      if (err) return console.err("err", err);
-      console.log("Connected and disconnected");
-    }).catch(function(err) {
-      console.log("big error", err.stack);
-    });
-  })();
-}

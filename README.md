@@ -4,8 +4,12 @@ Start a FirefoxOS simulator if no simulator is running.
 
 ## Install
 
-```
+```sh
+# Library
 $ npm install fxos-start
+
+# Command line
+$ npm install -g fxos-start
 ```
 
 ## Usage
@@ -57,4 +61,22 @@ start(function(err, client) {
     });
   });
 })
+```
+
+## Usage with command line
+
+```sh
+$ fxos-start
+Firefox Simulator started on port 8901
+
+$ fxos-start -p 8001
+Firefox Simulator started on port 8001
+```
+
+```sh
+Usage: fxos-start [options]
+
+Options:
+   -p, --port   Port of FirefoxOS
+   --version    Print version and exit
 ```
