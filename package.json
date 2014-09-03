@@ -23,10 +23,17 @@
     "fxos-simulators": "^0.1.0",
     "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",
-    "q": "^1.0.1",
-    "shelljs": "^0.3.0"
-  },
+    "q": "^1.0.1"
+    },
   "bin": {
     "fxos-start": "./bin/fxos-start.js"
-  }
+  },
+  "keywords": [
+    "simulator",
+    "developer tools",
+    "b2g",
+    "firefoxos",
+    "fxos",
+    "webapps"
+  ]
 }

@@ -4,10 +4,11 @@ var findB2G = require('fxos-simulators');
 var Q = require('q');
 var net = require('net');
 var discoverPorts = require('fx-ports');
-var exec = require('shelljs').exec;
+var spawn = require('child_process').spawn;
 var async = require('async');
 var FirefoxClient = require("firefox-client");
 var portfinder = require('portfinder');
+var fs = require('fs');
 
 
 module.exports = startB2G;
@@ -36,8 +37,27 @@ function portIsReady(port, cb) {
 
 function commandB2G(opts, callback) {
   var defer = Q.defer();
-  var command = '"' + opts.bin + '" -profile "' + opts.profile + '" -start-debugger-server ' + opts.port + ' -no-remote';
-  var output = exec(command, {silent: true, async:true}).output;
+
+  var options;
+  options = { stdio: ['ignore', 'ignore', 'ignore'] };
+  if (opts.exit) {
+    options.detached = true;
+  }
+  if (opts.verbose) {
+    options.stdio = [process.stdin,  process.stdout, process.stderr];
+  }
+
+  if (opts.stdin) options.stdio[0] = fs.openSync(opts.stdin, 'a');
+  if (opts.stdout) options.stdio[1] = fs.openSync(opts.stdout, 'a');
+  if (opts.stderr) options.stdio[2] = fs.openSync(opts.stderr, 'a');
+
+  var bin = spawn(
+    opts.bin,
+    ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
+    options
+  );
+
+  if (opts.exit) bin.unref();
   if (callback) callback(null, opts);
   defer.resolve(opts);
   return defer.promise;

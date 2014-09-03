@@ -10,6 +10,34 @@ var opts = require("nomnom")
     abbr: 'p',
     help: 'Port of FirefoxOS'
   })
+  .option('sdk', {
+    help: 'Version of FirefoxOS',
+    metavar: '<sdk version>'
+  })
+  .option('force', {
+    abbr: 'f',
+    help: 'Kill other simulators on this port',
+    flag: true
+  })
+  .option('verbose', {
+    help: 'Set the output level to verbose',
+    flag: true
+  })
+  .option('exit', {
+    help: 'Exit after startup',
+    flag: true
+  })
+  .option('stdin', {
+    help: 'The path where stdin of the simulator will be redirected to',
+    metavar: '<stdin filepath>'
+  })
+  .option('stdout', {
+    help: 'The path where stdout of the simulator will be redirected to',
+    metavar: '<stdout filepath>'
+  })
+  .option('timeout', {
+    help: 'The timeout time to wait for a response from the Simulator.',
+  })
   .option('version', {
     flag: true,
     help: 'Print version and exit',

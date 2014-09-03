@@ -14,7 +14,6 @@ $ npm install -g fxos-start
 
 ## Usage
 
-
 ### Start a simulator on known port, connect and return client
 
 Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
