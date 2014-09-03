@@ -53,8 +53,8 @@ var opts = require("nomnom")
 opts.connect = false;
 
 startB2G(opts)
-  .then(function(client){
-    console.log("Firefox Simulator started on port", opts.port);
+  .then(function(simulator){
+    console.log("Firefox Simulator", opts.sdk, "started on port", opts.port, simulator.process.pid);
   })
   .catch(function(err) {
     console.log("Error", err);

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-var findB2G = require('fxos-simulators');
+var findSimulators = require('fxos-simulators');
 var Q = require('q');
 var net = require('net');
 var discoverPorts = require('fx-ports');
@@ -58,8 +58,23 @@ function commandB2G(opts, callback) {
   );
 
   if (opts.exit) bin.unref();
-  if (callback) callback(null, opts);
-  defer.resolve(opts);
+  if (callback) callback(null, bin);
+  defer.resolve(bin);
+  return defer.promise;
+}
+
+function connect (opts, callback) {
+
+  var defer = Q.defer();
+
+  var client = new FirefoxClient();
+  client.connect(opts.port, function(err) {
+    if (err) return defer.reject(err);
+    opts.client = opts.client || client;
+    if (callback) callback(err, client);
+    defer.resolve(client);
+  });
+
   return defer.promise;
 }
 
@@ -68,36 +83,15 @@ function runB2G (opts) {
 
   // Port is not open
   if (opened_ports.indexOf(opts.port) == -1) {
-    return commandB2G(opts)
-      .then(function() {
-        return portIsReady(opts.port);
-      });
+    var commandReady = commandB2G(opts);
+    var portReady = commandReady.then(portIsReady.bind(null, opts.port));
+
+    return Q.all(commandReady, portReady);
   }
   // Port already open
   else {
     return Q();
   }
-}
-
-function connectB2G (opts, callback) {
-
-  var defer = Q.defer();
-
-  if (opts.connect === false) {
-    if (callback) callback(null, opts);
-    defer.resolve(opts);
-  }
-  else {
-    var client = new FirefoxClient();
-    client.connect(opts.port, function(err) {
-      if (err) return defer.reject(err);
-      opts.client = opts.client || client;
-      if (callback) callback(err, client);
-      defer.resolve(client);
-    });
-  }
-
-  return defer.promise;
 }
 
 function getPort (opts, found) {
@@ -118,26 +112,24 @@ function getPort (opts, found) {
   return deferred.promise;
 }
 
-function findB2GPromise (opts) {
+function findSimulatorsPromise (opts) {
   var deferred = Q.defer();
-  findB2G(opts, deferred.makeNodeResolver());
+  findSimulators(opts, deferred.makeNodeResolver());
   return deferred.promise;
 }
 
 function findPaths (opts) {
-  return findB2GPromise(opts).then(function(b2gs) {
+  return findSimulatorsPromise(opts).then(function(b2gs) {
     var latestB2G = b2gs[b2gs.length - 1];
-    return {
-      bin: latestB2G.bin,
-      profile: latestB2G.profile
-    };
+    return latestB2G;
   });
 }
 
 function findPort (opts) {
-  return getPort(opts).then(function(port) {
-    return port;
-  });
+  return getPort(opts)
+    .then(function(port) {
+      return port;
+    });
 }
 
 function startB2G () {
@@ -170,6 +162,10 @@ function startB2G () {
     });
   }
 
+  if (typeof opts.connect == 'undefined') {
+    opts.connect = true;
+  }
+
   /* Promises */
 
   // Make sure we have bin, profile and port
@@ -180,14 +176,28 @@ function startB2G () {
     .spread(function(paths, port) {
       if (!opts.bin) opts.bin = paths.bin;
       if (!opts.profile) opts.profile = paths.profile;
+      if (!opts.sdk) opts.sdk = paths.sdk;
       if (!opts.port) opts.port = port;
     });
 
   // If port is already open stop here
 
-
-  return ready
+  var simulatorReady = ready
     .then(runB2G.bind(null, opts))
-    .then(connectB2G.bind(null, opts, callback));
+    .then(function(running) {
+      return {process: running};
+    });
 
+  if (opts.connect) {
+    var clientReady = simulatorReady
+      .then(connect.bind(null, opts, callback));
+
+    return Q.all(simulatorReady, clientReady)
+      .spread(function(simulator, client) {
+        simulator.client = client;
+        return simulator;
+      });
+  }
+
+  return simulatorReady;
 }
