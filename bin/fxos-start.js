@@ -35,6 +35,10 @@ var opts = require("nomnom")
     help: 'The path where stdout of the simulator will be redirected to',
     metavar: '<stdout filepath>'
   })
+  .option('stderr', {
+    help: 'The path where stderr of the simulator will be redirected to',
+    metavar: '<stderr filepath>'
+  })
   .option('timeout', {
     help: 'The timeout time to wait for a response from the Simulator.',
   })
