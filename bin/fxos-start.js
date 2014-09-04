@@ -61,5 +61,5 @@ startB2G(opts)
     console.log("Firefox Simulator", opts.sdk, "started on port", opts.port, simulator.process.pid);
   })
   .catch(function(err) {
-    console.log("Error", err);
+    console.log("Error", err, err.stack);
   }).done();

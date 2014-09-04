@@ -16,33 +16,37 @@ module.exports = startB2G;
 function portIsReady(port, cb) {
   var defer = Q.defer();
 
-  function ping(defer) {
+  function ping() {
     var sock = new net.Socket();
     sock
       .on('connect', function() {
-        sock.destroy();
         defer.resolve();
+        sock.destroy();
       })
       .on('error', function(e) {
+        sock.destroy();
         setTimeout(function() {
           ping(defer);
         }, 1000);
       })
       .connect(port,'localhost');
   }
-  ping(defer);
+
+  ping();
 
   return defer.promise;
 }
 
-function commandB2G(opts, callback) {
+function commandB2G(opts) {
   var defer = Q.defer();
 
   var options;
   options = { stdio: ['ignore', 'ignore', 'ignore'] };
+
   if (opts.exit) {
     options.detached = true;
   }
+
   if (opts.verbose) {
     options.stdio = [process.stdin,  process.stdout, process.stderr];
   }
@@ -58,7 +62,6 @@ function commandB2G(opts, callback) {
   );
 
   if (opts.exit) bin.unref();
-  if (callback) callback(null, bin);
   defer.resolve(bin);
   return defer.promise;
 }
@@ -79,36 +82,14 @@ function connect (opts, callback) {
 }
 
 function runB2G (opts) {
-  var opened_ports = discoverPorts().b2g;
-
-  // Port is not open
-  if (opened_ports.indexOf(opts.port) == -1) {
-    var commandReady = commandB2G(opts);
-    var portReady = commandReady.then(portIsReady.bind(null, opts.port));
-
-    return Q.all(commandReady, portReady);
-  }
-  // Port already open
-  else {
-    return Q();
-  }
+  var commandReady = commandB2G(opts);
+  var portReady = commandReady.then(portIsReady.bind(null, opts.port));
+  return Q.all(commandReady, portReady);
 }
 
-function getPort (opts, found) {
+function getPort (opts) {
   var deferred = Q.defer();
-
-  var opened_ports = discoverPorts().b2g;
-
-  if (opened_ports.length > 0) {
-    if (found) found(null, opened_ports[0]);
-    deferred.resolve(opened_ports[0]);
-  } else {
-    portfinder.getPort(function(err, port){
-      if (found) found(err, port);
-      deferred.resolve(port);
-    });
-  }
-
+  portfinder.getPort(deferred.makeNodeResolver());
   return deferred.promise;
 }
 
@@ -119,16 +100,10 @@ function findSimulatorsPromise (opts) {
 }
 
 function findPaths (opts) {
-  return findSimulatorsPromise(opts).then(function(b2gs) {
-    var latestB2G = b2gs[b2gs.length - 1];
-    return latestB2G;
-  });
-}
-
-function findPort (opts) {
-  return getPort(opts)
-    .then(function(port) {
-      return port;
+  return findSimulatorsPromise(opts)
+    .then(function(b2gs) {
+      var latestB2G = b2gs[b2gs.length - 1];
+      return latestB2G;
     });
 }
 
@@ -137,8 +112,6 @@ function startB2G () {
   var args = arguments;
   var opts = {};
   var callback;
-
-  var promise = Q();
 
   /* Overloading */
 
@@ -162,25 +135,27 @@ function startB2G () {
     });
   }
 
+  if (opts.force) {
+    discoverPorts().b2g
+      .forEach(function(instance) {
+        process.kill(instance.pid);
+      });
+  }
+
+  // Defaults
   if (typeof opts.connect == 'undefined') {
     opts.connect = true;
   }
 
-  if (opts.force) {
-
-    var opened_instances = discoverPorts().b2g;
-
-    opened_instances
-      .forEach(function(instance) {
-        process.kill(instance.pid);
-      });
+  if (!opts.timeout) {
+    opts.timeout = 10*1000;
   }
 
   /* Promises */
 
   // Make sure we have bin, profile and port
   var pathsReady = (opts.bin && opts.profile) || findPaths(opts);
-  var portReady = opts.port || findPort(opts);
+  var portReady = opts.port || getPort(opts);
 
   var ready = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
