@@ -166,6 +166,16 @@ function startB2G () {
     opts.connect = true;
   }
 
+  if (opts.force) {
+
+    var opened_instances = discoverPorts().b2g;
+
+    opened_instances
+      .forEach(function(instance) {
+        process.kill(instance.pid);
+      });
+  }
+
   /* Promises */
 
   // Make sure we have bin, profile and port
