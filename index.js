@@ -127,14 +127,6 @@ function startB2G () {
 
   /* Options */
 
-  // if client is passed, no need to start
-  if (opts.client) {
-    return Q().then(function() {
-      if (callback) callback(null, opts.client);
-      return opts.client;
-    });
-  }
-
   if (opts.force) {
     discoverPorts().b2g
       .forEach(function(instance) {
