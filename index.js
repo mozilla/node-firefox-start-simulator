@@ -61,6 +61,20 @@ function commandB2G(opts) {
     options
   );
 
+
+  // From https://www.exratione.com/2013/05/die-child-process-die/
+  process.once('exit', function() {
+    bin.kill("SIGTERM");
+  });
+
+  process.once("uncaughtException", function (error) {
+    if (process.listeners("uncaughtException").length === 0) {
+      bin.kill("SIGTERM");
+      throw error;
+    }
+  });
+
+
   if (opts.exit) bin.unref();
   defer.resolve(bin);
   return defer.promise;
@@ -178,3 +192,11 @@ function startB2G () {
 
   return simulatorReady;
 }
+
+
+process.once("SIGTERM", function () {
+  process.exit(0);
+});
+process.once("SIGINT", function () {
+  process.exit(0);
+});
