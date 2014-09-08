@@ -19,6 +19,12 @@ var opts = require("nomnom")
     help: 'Set the output level to verbose',
     flag: true
   })
+  .option('bin', {
+    help: 'Set external B2G bin',
+  })
+  .option('profile', {
+    help: 'Set external B2G profile',
+  })
   .option('release', {
     list: true,
     help: 'Release of FirefoxOS to filter',
