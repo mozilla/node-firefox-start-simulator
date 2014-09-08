@@ -166,12 +166,14 @@ function startB2G () {
   var optsReady = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
 
-      opts.bin = opts.bin || paths.bin;
-      opts.profile = opts.profile || paths.profile;
-      opts.sdk = opts.sdk || paths.sdk;
-      opts.port = opts.port || port;
+      // Cloning bevause opts should be unaltered
+      var simulator = __.clone(opts);
+      simulator.bin = opts.bin || paths.bin;
+      simulator.profile = opts.profile || paths.profile;
+      simulator.sdk = opts.sdk || paths.sdk;
+      simulator.port = opts.port || port;
 
-      return opts;
+      return simulator;
     });
 
   var runReady = optsReady.then(runB2G);
