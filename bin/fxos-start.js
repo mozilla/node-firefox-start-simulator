@@ -56,9 +56,10 @@ var opts = require("nomnom")
 // No need to create FirefoxClient
 opts.connect = false;
 
+
 startB2G(opts)
   .then(function(simulator){
-    console.log("Firefox Simulator", opts.sdk, "started on port", opts.port, simulator.process.pid);
+    console.log("Firefox Simulator", simulator.sdk, "started on port", simulator.port, simulator.process.pid);
   })
   .catch(function(err) {
     console.log("Error", err, err.stack);

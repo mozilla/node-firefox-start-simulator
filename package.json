@@ -23,8 +23,9 @@
     "fxos-simulators": "^0.1.0",
     "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",
-    "q": "^1.0.1"
-    },
+    "q": "^1.0.1",
+    "underscore": "^1.7.0"
+  },
   "bin": {
     "fxos-start": "./bin/fxos-start.js"
   },

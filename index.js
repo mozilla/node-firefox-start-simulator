@@ -9,6 +9,7 @@ var async = require('async');
 var FirefoxClient = require("firefox-client");
 var portfinder = require('portfinder');
 var fs = require('fs');
+var __ = require('underscore');
 
 
 module.exports = startB2G;
@@ -55,32 +56,34 @@ function commandB2G(opts) {
   if (opts.stdout) options.stdio[1] = fs.openSync(opts.stdout, 'a');
   if (opts.stderr) options.stdio[2] = fs.openSync(opts.stderr, 'a');
 
-  var bin = spawn(
+  var sim_process = spawn(
     opts.bin,
     ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
     options
   );
 
 
-  // From https://www.exratione.com/2013/05/die-child-process-die/
-  process.once('exit', function() {
-    bin.kill("SIGTERM");
-  });
+  if (!opts.exit) {
+    // From https://www.exratione.com/2013/05/die-child-process-die/
+    process.once('exit', function() {
+      sim_process.kill("SIGTERM");
+    });
 
-  process.once("uncaughtException", function (error) {
-    if (process.listeners("uncaughtException").length === 0) {
-      bin.kill("SIGTERM");
-      throw error;
-    }
-  });
+    process.once("uncaughtException", function (error) {
+      if (process.listeners("uncaughtException").length === 0) {
+        sim_process.kill("SIGTERM");
+        throw error;
+      }
+    });
+  }
 
 
-  if (opts.exit) bin.unref();
-  defer.resolve(bin);
+  if (opts.exit) sim_process.unref();
+  defer.resolve(sim_process);
   return defer.promise;
 }
 
-function connect (opts, callback) {
+function connect (opts) {
 
   var defer = Q.defer();
 
@@ -88,7 +91,6 @@ function connect (opts, callback) {
   client.connect(opts.port, function(err) {
     if (err) return defer.reject(err);
     opts.client = opts.client || client;
-    if (callback) callback(err, client);
     defer.resolve(client);
   });
 
@@ -98,7 +100,9 @@ function connect (opts, callback) {
 function runB2G (opts) {
   var commandReady = commandB2G(opts);
   var portReady = commandReady.then(portIsReady.bind(null, opts.port));
-  return Q.all(commandReady, portReady);
+  return portReady.then(function() {
+    return commandReady;
+  });
 }
 
 function getPort (opts) {
@@ -131,7 +135,7 @@ function startB2G () {
 
   // startB2G(opts [, callback])
   if (typeof args[0] == 'object') {
-    opts = args[0];
+    opts = __.clone(args[0]);
   }
 
   // startB2G(..., callback)
@@ -142,10 +146,11 @@ function startB2G () {
   /* Options */
 
   if (opts.force) {
-    discoverPorts().b2g
-      .forEach(function(instance) {
+    discoverPorts({b2g: true}, function(err, instances) {
+      instances.forEach(function(instance) {
         process.kill(instance.pid);
       });
+    });
   }
 
   // Defaults
@@ -163,34 +168,40 @@ function startB2G () {
   var pathsReady = (opts.bin && opts.profile) || findPaths(opts);
   var portReady = opts.port || getPort(opts);
 
-  var ready = Q.all([pathsReady, portReady])
+  var optsReady = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
-      if (!opts.bin) opts.bin = paths.bin;
-      if (!opts.profile) opts.profile = paths.profile;
-      if (!opts.sdk) opts.sdk = paths.sdk;
-      if (!opts.port) opts.port = port;
+
+      opts.bin = opts.bin || paths.bin;
+      opts.profile = opts.profile || paths.profile;
+      opts.sdk = opts.sdk || paths.sdk;
+      opts.port = opts.port || port;
+
+      return opts;
     });
 
-  // If port is already open stop here
+  var runReady = optsReady.then(runB2G);
 
-  var simulatorReady = ready
-    .then(runB2G.bind(null, opts))
-    .then(function(running) {
-      return {process: running};
+  var simulatorReady = Q.all([optsReady, runReady])
+    .spread(function(options, sim_process) {
+      return __.extend(options, {process: sim_process});
+    })
+    .then(function(simulator) {
+      var maybeConnected = Q(simulator);
+
+      if (opts.connect) {
+        maybeConnected = connect(simulator).then(function(client) {
+          return __.extend(simulator, {client: client});
+        });
+      }
+
+      return maybeConnected;
     });
 
-  if (opts.connect) {
-    var clientReady = simulatorReady
-      .then(connect.bind(null, opts, callback));
+  return simulatorReady.then(function(simulator) {
+    if (callback) callback(null, simulator);
+    return simulator;
+  });
 
-    return Q.all(simulatorReady, clientReady)
-      .spread(function(simulator, client) {
-        simulator.client = client;
-        return simulator;
-      });
-  }
-
-  return simulatorReady;
 }
 
 
