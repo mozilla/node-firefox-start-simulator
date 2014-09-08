@@ -90,7 +90,6 @@ function connect (opts) {
   var client = new FirefoxClient();
   client.connect(opts.port, function(err) {
     if (err) return defer.reject(err);
-    opts.client = opts.client || client;
     defer.resolve(client);
   });
 
@@ -156,10 +155,6 @@ function startB2G () {
   // Defaults
   if (typeof opts.connect == 'undefined') {
     opts.connect = true;
-  }
-
-  if (!opts.timeout) {
-    opts.timeout = 10*1000;
   }
 
   /* Promises */
