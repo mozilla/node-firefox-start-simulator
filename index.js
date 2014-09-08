@@ -41,25 +41,24 @@ function portIsReady(port, cb) {
 function commandB2G(opts) {
   var defer = Q.defer();
 
-  var options;
-  options = { stdio: ['ignore', 'ignore', 'ignore'] };
+  var child_options = { stdio: ['ignore', 'ignore', 'ignore'] };
 
   if (opts.exit) {
-    options.detached = true;
+    child_options.detached = true;
   }
 
   if (opts.verbose) {
-    options.stdio = [process.stdin,  process.stdout, process.stderr];
+    child_options.stdio = [process.stdin,  process.stdout, process.stderr];
   }
 
-  if (opts.stdin) options.stdio[0] = fs.openSync(opts.stdin, 'a');
-  if (opts.stdout) options.stdio[1] = fs.openSync(opts.stdout, 'a');
-  if (opts.stderr) options.stdio[2] = fs.openSync(opts.stderr, 'a');
+  if (opts.stdin) child_options.stdio[0] = fs.openSync(opts.stdin, 'a');
+  if (opts.stdout) child_options.stdio[1] = fs.openSync(opts.stdout, 'a');
+  if (opts.stderr) child_options.stdio[2] = fs.openSync(opts.stderr, 'a');
 
   var sim_process = spawn(
     opts.bin,
     ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
-    options
+    child_options
   );
 
 
