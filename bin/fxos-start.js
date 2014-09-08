@@ -10,10 +10,6 @@ var opts = require("nomnom")
     abbr: 'p',
     help: 'Port of FirefoxOS'
   })
-  .option('sdk', {
-    help: 'Version of FirefoxOS',
-    metavar: '<sdk version>'
-  })
   .option('force', {
     abbr: 'f',
     help: 'Kill other simulators on this port',
@@ -22,6 +18,12 @@ var opts = require("nomnom")
   .option('verbose', {
     help: 'Set the output level to verbose',
     flag: true
+  })
+  .option('release', {
+    list: true,
+    help: 'Release of FirefoxOS to filter',
+    metavar: '<release>',
+    type: 'string'
   })
   .option('exit', {
     help: 'Exit after startup',
@@ -56,10 +58,9 @@ var opts = require("nomnom")
 // No need to create FirefoxClient
 opts.connect = false;
 
-
 startB2G(opts)
   .then(function(simulator){
-    console.log("Firefox Simulator", simulator.sdk, "started on port", simulator.port, simulator.process.pid);
+    console.log("Firefox Simulator", simulator.release, "started on port", simulator.port, simulator.process.pid);
   })
   .catch(function(err) {
     console.log("Error", err, err.stack);

@@ -19,7 +19,7 @@
   "dependencies": {
     "async": "^0.9.0",
     "firefox-client": "^0.2.3",
-    "fx-ports": "^0.1.0",
+    "fx-ports": "^0.1.1",
     "fxos-simulators": "^0.1.0",
     "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",

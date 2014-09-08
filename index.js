@@ -169,8 +169,13 @@ function startB2G () {
       var simulator = __.clone(opts);
       simulator.bin = opts.bin || paths.bin;
       simulator.profile = opts.profile || paths.profile;
-      simulator.sdk = opts.sdk || paths.sdk;
       simulator.port = opts.port || port;
+      if (paths.release) {
+        simulator.release = paths.release;
+      }
+      else if (opts.bin && opts.path && opts.release.length == 1) {
+        simulator.release = simulator.release[0];
+      }
 
       return simulator;
     });
