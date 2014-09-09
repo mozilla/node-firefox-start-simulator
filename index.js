@@ -118,6 +118,8 @@ function findSimulatorsPromise (opts) {
 function findPaths (opts) {
   return findSimulatorsPromise(opts)
     .then(function(b2gs) {
+      if (!b2gs || !b2gs.length)
+        throw new Error ("No simulator found on your machine")
       var latestB2G = b2gs[b2gs.length - 1];
       return latestB2G;
     });
@@ -159,32 +161,33 @@ function startB2G () {
   /* Promises */
 
   // Make sure we have bin, profile and port
-  var pathsReady = (opts.bin && opts.profile) || findPaths(opts);
+  var pathsReady = (opts.bin && opts.profile) ? {bin: opts.bin, opts: opts.profile} : findPaths(opts);
   var portReady = opts.port || getPort(opts);
 
   var optsReady = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
-
       // Cloning bevause opts should be unaltered
       var simulator = __.clone(opts);
-      simulator.bin = opts.bin || paths.bin;
-      simulator.profile = opts.profile || paths.profile;
-      simulator.port = opts.port || port;
-      if (paths.release) {
+      simulator.bin = paths.bin;
+      simulator.profile = paths.profile;
+      simulator.port = port;
+      if (paths && paths.release) {
         simulator.release = paths.release;
       }
-      else if (opts.bin && opts.path && opts.release.length == 1) {
+      else if (opts.bin && opts.profile && opts.release.length == 1) {
         simulator.release = simulator.release[0];
       }
 
       return simulator;
-    });
+    })
+
+  optsReady.done();
 
   var runReady = optsReady.then(runB2G);
 
   var simulatorReady = Q.all([optsReady, runReady])
     .spread(function(options, sim_process) {
-      return __.extend(options, {process: sim_process});
+      return __.extend(options, {process: sim_process, pid: sim_process.pid});
     })
     .then(function(simulator) {
       var maybeConnected = Q(simulator);
