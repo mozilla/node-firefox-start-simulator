@@ -25,6 +25,9 @@ function portIsReady(port, cb) {
         sock.destroy();
       })
       .on('error', function(e) {
+        if (e && e.code != 'ECONNREFUSED') {
+          throw e;
+        }
         sock.destroy();
         setTimeout(function() {
           ping(defer);
