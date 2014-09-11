@@ -179,7 +179,7 @@ function startB2G () {
       }
 
       return simulator;
-    })
+    });
 
   optsReady.done();
 
@@ -190,15 +190,16 @@ function startB2G () {
       return __.extend(options, {process: sim_process, pid: sim_process.pid});
     })
     .then(function(simulator) {
-      var maybeConnected = Q(simulator);
 
       if (opts.connect) {
-        maybeConnected = connect(simulator).then(function(client) {
-          return __.extend(simulator, {client: client});
-        });
+        return connect(simulator)
+          .then(function(client) {
+            return __.extend(simulator, {client: client});
+          });
+      } else {
+        return Q(simulator);
       }
 
-      return maybeConnected;
     });
 
   return simulatorReady.then(function(simulator) {
