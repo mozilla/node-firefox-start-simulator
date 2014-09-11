@@ -9,7 +9,7 @@ describe('fxos-start', function(){
   describe('when no simulator is open', function(){
 
     it('should start a simulator', function(done) {
-      Start({connect:false})
+      Start()
         .then(function(sim) {
           process.kill(sim.pid);
           sim.pid.should.be.type('number');
@@ -21,7 +21,7 @@ describe('fxos-start', function(){
     });
 
     it('should match given release', function(done) {
-      Start({release:['2.1'], connect:false})
+      Start({release:['2.1']})
         .then(function(sim) {
           process.kill(sim.pid);
           sim.release.should.equal('2.1');
@@ -31,7 +31,7 @@ describe('fxos-start', function(){
     });
 
     it('should match given port', function(done) {
-      Start({port:8081, connect:false})
+      Start({port:8081})
         .then(function(sim) {
           process.kill(sim.pid);
           sim.port.should.equal(8081);
@@ -46,7 +46,6 @@ describe('fxos-start', function(){
     it('opts.force should force close the ones opened', function(done) {
       this.timeout(4000)
       var first = Start({
-        connect:false,
         force: true,
         port: 8081
       }).fail(done);

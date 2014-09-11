@@ -158,7 +158,7 @@ function startB2G () {
 
   // Defaults
   if (typeof opts.connect == 'undefined') {
-    opts.connect = true;
+    opts.connect = false;
   }
 
   /* Promises */
