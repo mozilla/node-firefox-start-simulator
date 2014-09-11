@@ -5,6 +5,7 @@ var Q = require('q');
 
 
 describe('fxos-start', function(){
+  this.timeout(10000)
 
   describe('when no simulator is open', function(){
 
@@ -44,7 +45,6 @@ describe('fxos-start', function(){
   describe('when a simulator is open', function(){
 
     it('opts.force should force close the ones opened', function(done) {
-      this.timeout(4000)
       var first = Start({
         force: true,
         port: 8081
