@@ -1,6 +1,6 @@
 {
   "name": "fxos-start",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
   "scripts": {
@@ -18,9 +18,9 @@
   "homepage": "https://github.com/nicola/fxos-start",
   "dependencies": {
     "async": "^0.9.0",
-    "firefox-client": "^0.2.3",
-    "fx-ports": "^0.1.1",
-    "fxos-simulators": "^0.1.0",
+    "firefox-client": "^0.3.0",
+    "fx-ports": "^0.2.0",
+    "fxos-simulators": "^0.2.0",
     "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",
     "q": "^1.0.1",
