@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-var findSimulators = require('fxos-simulators');
+var FXOSSimulators = require('fxos-simulators');
 var Q = require('q');
 var net = require('net');
-var discoverPorts = require('fx-ports');
+var FXPorts = require('fx-ports');
 var spawn = require('child_process').spawn;
 var async = require('async');
 var FirefoxClient = require("firefox-client");
@@ -35,9 +35,7 @@ function portIsReady(port, cb) {
       })
       .connect(port,'localhost');
   }
-
   ping();
-
   return defer.promise;
 }
 
@@ -64,7 +62,6 @@ function commandB2G(opts) {
     child_options
   );
 
-
   if (!opts.exit) {
     // From https://www.exratione.com/2013/05/die-child-process-die/
     process.once('exit', function() {
@@ -79,23 +76,20 @@ function commandB2G(opts) {
     });
   }
 
-
   if (opts.exit) sim_process.unref();
   defer.resolve(sim_process);
   return defer.promise;
 }
 
-function connect (opts) {
-
-  var defer = Q.defer();
-
+function createClient (simulator) {
+  var deferred = Q.defer();
   var client = new FirefoxClient();
-  client.connect(opts.port, function(err) {
-    if (err) return defer.reject(err);
-    defer.resolve(client);
+  client.connect(simulator.port, function (err) {
+    if (err) deferred.reject(err);
+    simulator.client = client;
+    deferred.resolve(simulator);
   });
-
-  return defer.promise;
+  return deferred.promise;
 }
 
 function runB2G (opts) {
@@ -106,67 +100,39 @@ function runB2G (opts) {
   });
 }
 
-function getPort (opts) {
-  var deferred = Q.defer();
-  portfinder.getPort(deferred.makeNodeResolver());
-  return deferred.promise;
-}
-
-function findSimulatorsPromise (opts) {
-  var deferred = Q.defer();
-  findSimulators(opts, deferred.makeNodeResolver());
-  return deferred.promise;
-}
 
 function findPaths (opts) {
-  return findSimulatorsPromise(opts)
+  return Q.nfcall(FXOSSimulators, opts)
     .then(function(b2gs) {
       if (!b2gs || !b2gs.length)
-        throw new Error ("No simulator found on your machine")
+        throw new Error ("No simulator found on your machine");
       var latestB2G = b2gs[b2gs.length - 1];
       return latestB2G;
     });
 }
 
-function startB2G () {
+function startB2G (opts, callback) {
 
-  var args = arguments;
-  var opts = {};
-  var callback;
-
-  /* Overloading */
-
-  // startB2G(opts [, callback])
-  if (typeof args[0] == 'object') {
-    opts = __.clone(args[0]);
+  if (typeof opts == 'function') {
+    callback = opts;
   }
-
-  // startB2G(..., callback)
-  if (typeof args[args.length-1] == 'function') {
-    callback = args[args.length-1];
-  }
+  opts = __.clone(opts) || {};
 
   /* Options */
 
   if (opts.force) {
-    discoverPorts({b2g: true}, function(err, instances) {
+    FXPorts({b2g: true}, function(err, instances) {
       instances.forEach(function(instance) {
         process.kill(instance.pid);
       });
     });
   }
 
-  // Defaults
-  if (typeof opts.connect == 'undefined') {
-    opts.connect = false;
-  }
-
   /* Promises */
 
   // Make sure we have bin, profile and port
   var pathsReady = (opts.bin && opts.profile) ? {bin: opts.bin, opts: opts.profile} : findPaths(opts);
-  var portReady = opts.port || getPort(opts);
-
+  var portReady = opts.port || Q.ninvoke(portfinder, 'getPort', opts);
   var optsReady = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
       // Cloning bevause opts should be unaltered
@@ -184,34 +150,23 @@ function startB2G () {
       return simulator;
     });
 
-  optsReady.done();
-
   var runReady = optsReady.then(runB2G);
 
-  var simulatorReady = Q.all([optsReady, runReady])
-    .spread(function(options, sim_process) {
-      return __.extend(options, {process: sim_process, pid: sim_process.pid});
+  return Q.all([optsReady, runReady])
+    .spread(function(opts, sim_process) {
+      opts.process = sim_process;
+      opts.pid = sim_process.pid;
+      return opts;
     })
     .then(function(simulator) {
-
-      if (opts.connect) {
-        return connect(simulator)
-          .then(function(client) {
-            return __.extend(simulator, {client: client});
-          });
-      } else {
-        return Q(simulator);
-      }
-
+      return opts.connect ? createClient(sim) : simulator;
+    })
+    .then(function(simulator) {
+      if (callback) callback(null, simulator);
+      return simulator;
     });
 
-  return simulatorReady.then(function(simulator) {
-    if (callback) callback(null, simulator);
-    return simulator;
-  });
-
 }
-
 
 process.once("SIGTERM", function () {
   process.exit(0);
