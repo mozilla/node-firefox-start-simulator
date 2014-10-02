@@ -36,7 +36,31 @@ Options:
 
 ### Node library
 
-### Start a simulator on known port, connect and return client
+#### Callback
+
+```javascript
+var start = require('fxos-start');
+start(function(err, sim) {
+
+})
+```
+
+#### Promise
+
+```javascript
+var start = require('fxos-start');
+start()
+  .then(
+    function(sim) {
+    },
+    function(err) {
+    }
+  );
+```
+
+## Examples
+
+#### Start a simulator on known port, connect and return client
 
 Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
 ```javascript
@@ -51,7 +75,7 @@ start({port:1234}, function(err, sim) {
 })
 ```
 
-### Start a simulator on known port without connecting
+#### Start a simulator on known port without connecting
 Just start a FirefoxOS simulator without opening a connection:
 
 ```javascript
@@ -68,7 +92,7 @@ start({port:1234, connect:false}, function(err) {
 })
 ```
 
-### Start a simulator on any port
+#### Start a simulator on any port
 Just start a  without opening a connection:
 
 ```javascript
@@ -84,7 +108,7 @@ start(function(err, sim) {
 })
 ```
 
-### Start and kill simulator
+#### Start and kill simulator
 
 ```javascript
 var start = require('fxos-start');
@@ -94,7 +118,7 @@ start(function(err, sim) {
 })
 ```
 
-### Force start a simulator
+#### Force start a simulator
 
 ```javascript
 var start = require('fxos-start');
