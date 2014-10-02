@@ -161,10 +161,7 @@ function startB2G (opts, callback) {
     .then(function(simulator) {
       return opts.connect ? createClient(sim) : simulator;
     })
-    .then(function(simulator) {
-      if (callback) callback(null, simulator);
-      return simulator;
-    });
+    .nodeify(callback);
 
 }
 
