@@ -1,6 +1,6 @@
 # fxos-start
 
-Start a FirefoxOS simulator if no simulator is running.
+Start a Firefox OS simulator in NodeJS/CLI
 
 ## Install
 
