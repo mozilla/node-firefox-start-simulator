@@ -14,6 +14,8 @@ $ npm install -g fxos-start
 
 ## Usage
 
+### Command line
+
 ```sh
 Usage: fxos-start [options]
 
@@ -32,14 +34,16 @@ Options:
    --version                    Print version and exit
 ```
 
+### Node library
+
 ### Start a simulator on known port, connect and return client
 
 Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
 ```javascript
 var start = require('fxos-start');
-start({port:1234}, function(err, client) {
+start({port:1234}, function(err, sim) {
   // Let's show for example all the running apps
-  client.getWebapps(function(err, webapps) {
+  sim.client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
       console.log("Running apps:", apps);
     });
@@ -69,10 +73,10 @@ Just start a  without opening a connection:
 
 ```javascript
 var start = require('fxos-start');
-start(function(err, client) {
+start(function(err, sim) {
   // Let's show for example all the running apps
 
-  client.getWebapps(function(err, webapps) {
+  sim.client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
       console.log("Running apps:", apps);
     });
@@ -80,12 +84,22 @@ start(function(err, client) {
 })
 ```
 
-## Usage with command line
+### Start and kill simulator
 
-```sh
-$ fxos-start
-Firefox Simulator started on port 8901
+```javascript
+var start = require('fxos-start');
+start(function(err, sim) {
+  sim.client.disconnect();
+  process.kill(sim.pid);
+})
+```
 
-$ fxos-start -p 8001
-Firefox Simulator started on port 8001
+### Force start a simulator
+
+```javascript
+var start = require('fxos-start');
+start({force: true}, function(err, sim) {
+  sim.client.disconnect();
+  process.kill(sim.pid);
+})
 ```
