@@ -1,6 +1,8 @@
 # fxos-start
 
-Start a Firefox OS simulator in NodeJS/CLI. This is part of [node-fxos](https://github.com/nicola/node-fxos)' project.
+Start a Firefox OS simulator in NodeJS/CLI.
+
+This is part of [node-fxos](https://github.com/nicola/node-fxos)' project.
 
 ## Install
 
