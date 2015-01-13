@@ -1,12 +1,11 @@
-#!/usr/bin/env node
+'use strict';
 
 var FXOSSimulators = require('fxos-simulators');
 var Q = require('q');
 var net = require('net');
 var FXPorts = require('fx-ports');
 var spawn = require('child_process').spawn;
-var async = require('async');
-var FirefoxClient = require("firefox-client");
+var FirefoxClient = require('firefox-client');
 var portfinder = require('portfinder');
 var fs = require('fs');
 var __ = require('underscore');
@@ -25,7 +24,7 @@ function portIsReady(port, cb) {
         sock.destroy();
       })
       .on('error', function(e) {
-        if (e && e.code != 'ECONNREFUSED') {
+        if (e && e.code !== 'ECONNREFUSED') {
           throw e;
         }
         sock.destroy();
@@ -42,57 +41,67 @@ function portIsReady(port, cb) {
 function commandB2G(opts) {
   var defer = Q.defer();
 
-  var child_options = { stdio: ['ignore', 'ignore', 'ignore'] };
+  var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
 
   if (opts.exit) {
-    child_options.detached = true;
+    childOptions.detached = true;
   }
 
   if (opts.verbose) {
-    child_options.stdio = [process.stdin,  process.stdout, process.stderr];
+    childOptions.stdio = [process.stdin,  process.stdout, process.stderr];
   }
 
-  if (opts.stdin) child_options.stdio[0] = fs.openSync(opts.stdin, 'a');
-  if (opts.stdout) child_options.stdio[1] = fs.openSync(opts.stdout, 'a');
-  if (opts.stderr) child_options.stdio[2] = fs.openSync(opts.stderr, 'a');
+  if (opts.stdin) {
+    childOptions.stdio[0] = fs.openSync(opts.stdin, 'a');
+  }
+  if (opts.stdout) {
+    childOptions.stdio[1] = fs.openSync(opts.stdout, 'a');
+  }
+  if (opts.stderr) {
+    childOptions.stdio[2] = fs.openSync(opts.stderr, 'a');
+  }
 
-  var sim_process = spawn(
+  var simProcess = spawn(
     opts.bin,
     ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
-    child_options
+    childOptions
   );
 
   if (!opts.exit) {
     // From https://www.exratione.com/2013/05/die-child-process-die/
     process.once('exit', function() {
-      sim_process.kill("SIGTERM");
+      simProcess.kill('SIGTERM');
     });
 
-    process.once("uncaughtException", function (error) {
-      if (process.listeners("uncaughtException").length === 0) {
-        sim_process.kill("SIGTERM");
+    process.once('uncaughtException', function(error) {
+      if (process.listeners('uncaughtException').length === 0) {
+        simProcess.kill('SIGTERM');
         throw error;
       }
     });
   }
 
-  if (opts.exit) sim_process.unref();
-  defer.resolve(sim_process);
+  if (opts.exit) {
+    simProcess.unref();
+  }
+  defer.resolve(simProcess);
   return defer.promise;
 }
 
-function createClient (simulator) {
+function createClient(simulator) {
   var deferred = Q.defer();
   var client = new FirefoxClient();
-  client.connect(simulator.port, function (err) {
-    if (err) deferred.reject(err);
+  client.connect(simulator.port, function(err) {
+    if (err) {
+      deferred.reject(err);
+    }
     simulator.client = client;
     deferred.resolve(simulator);
   });
   return deferred.promise;
 }
 
-function runB2G (opts) {
+function runB2G(opts) {
   var commandReady = commandB2G(opts);
   var portReady = commandReady.then(portIsReady.bind(null, opts.port));
   return portReady.then(function() {
@@ -101,19 +110,20 @@ function runB2G (opts) {
 }
 
 
-function findPaths (opts) {
+function findPaths(opts) {
   return Q.nfcall(FXOSSimulators, opts)
     .then(function(b2gs) {
-      if (!b2gs || !b2gs.length)
-        throw new Error ("No simulator found on your machine");
+      if (!b2gs || !b2gs.length) {
+        throw new Error ('No simulator found on your machine');
+      }
       var latestB2G = b2gs[b2gs.length - 1];
       return latestB2G;
     });
 }
 
-function startB2G (opts, callback) {
+function startB2G(opts, callback) {
 
-  if (typeof opts == 'function') {
+  if (typeof opts === 'function') {
     callback = opts;
   }
   opts = __.clone(opts) || {};
@@ -121,7 +131,7 @@ function startB2G (opts, callback) {
   /* Options */
 
   if (opts.force) {
-    FXPorts({b2g: true}, function(err, instances) {
+    new FXPorts({ b2g: true }, function(err, instances) {
       instances.forEach(function(instance) {
         process.kill(instance.pid);
       });
@@ -131,7 +141,7 @@ function startB2G (opts, callback) {
   /* Promises */
 
   // Make sure we have bin, profile and port
-  var pathsReady = (opts.bin && opts.profile) ? {bin: opts.bin, opts: opts.profile} : findPaths(opts);
+  var pathsReady = (opts.bin && opts.profile) ? { bin: opts.bin, opts: opts.profile } : findPaths(opts);
   var portReady = opts.port || Q.ninvoke(portfinder, 'getPort', opts);
   var optsReady = Q.all([pathsReady, portReady])
     .spread(function(paths, port) {
@@ -143,7 +153,7 @@ function startB2G (opts, callback) {
       if (paths && paths.release) {
         simulator.release = paths.release;
       }
-      else if (opts.bin && opts.profile && opts.release.length == 1) {
+      else if (opts.bin && opts.profile && opts.release.length === 1) {
         simulator.release = simulator.release[0];
       }
 
@@ -153,9 +163,9 @@ function startB2G (opts, callback) {
   var runReady = optsReady.then(runB2G);
 
   return Q.all([optsReady, runReady])
-    .spread(function(opts, sim_process) {
-      opts.process = sim_process;
-      opts.pid = sim_process.pid;
+    .spread(function(opts, simProcess) {
+      opts.process = simProcess;
+      opts.pid = simProcess.pid;
       return opts;
     })
     .then(function(simulator) {
@@ -165,9 +175,9 @@ function startB2G (opts, callback) {
 
 }
 
-process.once("SIGTERM", function () {
+process.once('SIGTERM', function() {
   process.exit(0);
 });
-process.once("SIGINT", function () {
+process.once('SIGINT', function() {
   process.exit(0);
 });
