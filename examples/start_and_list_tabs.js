@@ -1,12 +1,14 @@
 var startB2G = require('../index');
 
-startB2G({port:8002}, function(err, client) {
-  // Let's show for example all the running apps
+startB2G({ connect: true, port: 8002 }, function(err, sim) {
+  var client = sim.client;
 
+  // Let's show for example all the running apps
   client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
       console.log("Running apps:", apps);
       client.disconnect();
+      process.kill(sim.pid);
     });
   });
 

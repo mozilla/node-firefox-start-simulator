@@ -1,7 +1,7 @@
 var startB2G = require('../index');
 var FirefoxClient = require('firefox-client');
 
-startB2G({port:8003, connect:false}, function(err, sim) {
+startB2G({ port: 8003, connect: false }, function(err, sim) {
 
   var client = new FirefoxClient();
 
@@ -11,6 +11,7 @@ startB2G({port:8003, connect:false}, function(err, sim) {
       webapps.listRunningApps(function(err, apps) {
         console.log("Running apps:", apps);
         client.disconnect();
+        process.kill(sim.pid);
       });
     });
   });
