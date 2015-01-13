@@ -4,44 +4,33 @@ Start a Firefox OS simulator in NodeJS/CLI.
 
 This is part of the [node-firefox](https://github.com/mozilla/node-firefox) project.
 
-## Install
+## Installation
+
+### From git
 
 ```sh
-# Library
-$ npm install fxos-start
-
-# Command line
-$ npm install -g fxos-start
+git clone https://github.com/mozilla/node-firefox-start.git
+cd node-firefox-start
+npm install
 ```
+
+If you want to update later on:
+
+```sh
+cd node-firefox-start
+git pull origin master
+npm install
+```
+
+### npm
+This module is not on npm yet.
 
 ## Usage
-
-### Command line
-
-```sh
-Usage: fxos-start [options]
-
-Options:
-   -p, --port                   Port of FirefoxOS
-   -f, --force                  Kill other simulators on this port
-   --verbose                    Set the output level to verbose
-   --bin                        Set external B2G bin
-   --profile                    Set external B2G profile
-   --release <release>          Release of FirefoxOS to filter
-   --exit                       Exit after startup
-   --stdin <stdin filepath>     The path where stdin of the simulator will be redirected to
-   --stdout <stdout filepath>   The path where stdout of the simulator will be redirected to
-   --stderr <stderr filepath>   The path where stderr of the simulator will be redirected to
-   --timeout                    The timeout time to wait for a response from the Simulator.
-   --version                    Print version and exit
-```
-
-### Node library
 
 #### Callback
 
 ```javascript
-var start = require('fxos-start');
+var start = require('./node-firefox-start');
 start(function(err, sim) {
 
 })
@@ -50,7 +39,7 @@ start(function(err, sim) {
 #### Promise
 
 ```javascript
-var start = require('fxos-start');
+var start = require('./node-firefox-start');
 start()
   .then(
     function(sim) {
@@ -66,8 +55,8 @@ start()
 
 Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
 ```javascript
-var start = require('fxos-start');
-start({port:1234}, function(err, sim) {
+var start = require('./node-firefox-start');
+start({ port:1234, connect: true }, function(err, sim) {
   // Let's show for example all the running apps
   sim.client.getWebapps(function(err, webapps) {
     webapps.listRunningApps(function(err, apps) {
@@ -81,10 +70,10 @@ start({port:1234}, function(err, sim) {
 Just start a FirefoxOS simulator without opening a connection:
 
 ```javascript
-var start = require('fxos-start');
-start({port:1234, connect:false}, function(err) {
+var start = require('./node-firefox-start');
+start({ port:1234, connect:false }, function(err, sim) {
   // Let's show for example all the running apps
-  client.connect(1234, function() {
+  sim.client.connect(1234, function() {
     client.getWebapps(function(err, webapps) {
       webapps.listRunningApps(function(err, apps) {
         console.log("Running apps:", apps);
@@ -98,8 +87,8 @@ start({port:1234, connect:false}, function(err) {
 Just start a  without opening a connection:
 
 ```javascript
-var start = require('fxos-start');
-start(function(err, sim) {
+var start = require('./node-firefox-start');
+start({ connect: true }, function(err, sim) {
   // Let's show for example all the running apps
 
   sim.client.getWebapps(function(err, webapps) {
@@ -113,8 +102,8 @@ start(function(err, sim) {
 #### Start and kill simulator
 
 ```javascript
-var start = require('fxos-start');
-start(function(err, sim) {
+var start = require('./node-firefox-start');
+start({ connect: true }, function(err, sim) {
   sim.client.disconnect();
   process.kill(sim.pid);
 })
@@ -123,8 +112,8 @@ start(function(err, sim) {
 #### Force start a simulator
 
 ```javascript
-var start = require('fxos-start');
-start({force: true}, function(err, sim) {
+var start = require('./node-firefox-start');
+start({ connect: true, force: true }, function(err, sim) {
   sim.client.disconnect();
   process.kill(sim.pid);
 })
