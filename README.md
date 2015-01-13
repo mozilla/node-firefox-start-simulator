@@ -1,8 +1,8 @@
-# fxos-start
+# node-firefox-start
 
 Start a Firefox OS simulator in NodeJS/CLI.
 
-This is part of [node-fxos](https://github.com/nicola/node-fxos)' project.
+This is part of the [node-firefox](https://github.com/mozilla/node-firefox) project.
 
 ## Install
 
@@ -129,3 +129,8 @@ start({force: true}, function(err, sim) {
   process.kill(sim.pid);
 })
 ```
+
+##History
+
+This is based on initial work on fxos-start by Nicola Greco.
+
