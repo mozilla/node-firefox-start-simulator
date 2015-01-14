@@ -109,16 +109,19 @@ function runB2G(opts) {
   });
 }
 
-
 function findPaths(opts) {
-  return Q.nfcall(FXOSSimulators, opts)
-    .then(function(b2gs) {
-      if (!b2gs || !b2gs.length) {
-        throw new Error ('No simulator found on your machine');
+  return new FXOSSimulators(opts).then(function(result) {
+    if (!result || !result.length) {
+      var errorMsg = 'No simulator found on your machine.';
+      if (opts && opts.version) {
+        errorMsg = 'No simulator for Firefox version ' + opts.version + ' found on your machine.';
       }
-      var latestB2G = b2gs[b2gs.length - 1];
-      return latestB2G;
-    });
+      console.error(new Error(errorMsg));
+      process.exit(1);
+    }
+    var latestB2G = result[result.length - 1];
+    return latestB2G;
+  });
 }
 
 function startB2G(opts, callback) {
