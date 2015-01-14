@@ -6,8 +6,8 @@
   "dependencies": {
     "async": "^0.9.0",
     "firefox-client": "^0.3.0",
-    "fx-ports": "^0.3.0",
-    "fxos-simulators": "^0.3.0",
+    "node-firefox-ports": "git+https://git@github.com/mozilla/node-firefox-ports.git",
+    "node-firefox-find-simulators": "git+https://git@github.com/mozilla/node-firefox-find-simulators.git",
     "nomnom": "^1.8.0",
     "portfinder": "^0.2.1",
     "q": "^1.0.1",

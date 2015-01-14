@@ -1,9 +1,9 @@
 'use strict';
 
-var FXOSSimulators = require('fxos-simulators');
+var FXOSSimulators = require('node-firefox-find-simulators');
 var Q = require('q');
 var net = require('net');
-var FXPorts = require('fx-ports');
+var FXPorts = require('node-firefox-ports');
 var spawn = require('child_process').spawn;
 var FirefoxClient = require('firefox-client');
 var portfinder = require('portfinder');
