@@ -27,9 +27,6 @@ function startSimulator(options) {
     Promise.all([ findSimulator(/* TODO options */), findAvailablePort() ])
       .then(function(results) {
 
-        console.log('------------');
-        console.log('yo', results);
-
         var simulator = results[0];
         var port = results[1];
 
@@ -39,9 +36,14 @@ function startSimulator(options) {
           detached: detached,
           verbose: verbose
         }).then(function(simLaunched) {
+
           console.log('SIMU', simLaunched);
-          // TODO don't resolve yet, waitUntilSimulatorIsReady
-          resolve(simLaunched);
+          waitUntilSimulatorIsReady(port).then(function(ready) {
+            resolve(simLaunched);
+          }, function(timedOutError) {
+            reject(timedOutError);
+          });
+          
         }, function(simLaunchError) {
           reject(simLaunchError);
         });
@@ -100,8 +102,6 @@ function launchSimulator(options) {
       detached: detached,
       verbose: options.verbose
     }).then(function(simulatorProcess) {
-
-      console.log('simulator started', simulatorProcess);
 
       // If the simulator is not detached, we need to kill its process
       // once our own process exits
@@ -170,6 +170,48 @@ function startSimulatorProcess(options) {
 
 }
 
+
+function waitUntilSimulatorIsReady(port) {
+
+  var maxTimeout = 25000;
+  var attemptInterval = 1000;
+  var elapsedTime = 0;
+
+  return new Promise(function(resolve, reject) {
+
+    function ping() {
+      console.log('ping?');
+      var socket = new net.Socket();
+      socket
+        .on('connect', function() {
+          resolve();
+          socket.destroy();
+        }).on('error', function(error) {
+          if(error && error.code !== 'ECONNREFUSED') {
+            throw error;
+          }
+          socket.destroy();
+          maybeTryAgain();
+        }).connect(port, 'localhost');
+    }
+
+    function maybeTryAgain() {
+      elapsedTime += attemptInterval;
+
+      if(elapsedTime < maxTimeout) {
+        setTimeout(ping, attemptInterval);
+      } else {
+        reject(new Error('Timed out trying to connect to the simulator in ' + port));
+      }
+
+    }
+
+    ping();
+
+  });
+
+}
+
 function portIsReady(port, cb) {
   var defer = Q.defer();
 
@@ -195,6 +237,7 @@ function portIsReady(port, cb) {
   return defer.promise;
 }
 
+// XXX TODO Not using this one in favour of startSimulatorProcess, keeping for reference
 function commandB2G(opts) {
   var defer = Q.defer();
 
