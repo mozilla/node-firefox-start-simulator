@@ -1,9 +1,9 @@
 'use strict';
 
-var startB2G = require('../index');
+var startSimulator = require('../index');
 
-startB2G({ connect: true, port: 8002 }, function(err, sim) {
-  var client = sim.client;
+startSimulator({ connect: true, port: 8002 }).then(function(results) {
+  /*var client = sim.client;
 
   // Let's show for example all the running apps
   client.getWebapps(function(err, webapps) {
@@ -12,6 +12,9 @@ startB2G({ connect: true, port: 8002 }, function(err, sim) {
       client.disconnect();
       process.kill(sim.pid);
     });
-  });
+  });*/
+  console.log(results);
 
+}, function(err) {
+  console.error('Error starting simulator', err);
 });

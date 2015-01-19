@@ -1,9 +1,12 @@
 'use strict';
 
-var FXOSSimulators = require('node-firefox-find-simulators');
+// See https://github.com/jshint/jshint/issues/1747 for context
+/* global -Promise */
+var Promise = require('es6-promise').Promise;
+var findSimulators = require('node-firefox-find-simulators');
 var Q = require('q');
 var net = require('net');
-var FXPorts = require('node-firefox-find-ports');
+var findPorts = require('node-firefox-find-ports');
 var spawn = require('child_process').spawn;
 var FirefoxClient = require('firefox-client');
 var portfinder = require('portfinder');
@@ -11,7 +14,122 @@ var fs = require('fs');
 var __ = require('underscore');
 
 
-module.exports = startB2G;
+module.exports = startSimulator;
+
+function startSimulator(options) {
+  /* TODO if options.force, it should find running simulators and kill them */
+
+  // findSimulators, findPort -> launch simulator, wait until ready
+
+  return new Promise(function(resolve, reject) {
+
+    Promise.all([ findSimulator(), findAvailablePort() ])
+      .then(function(results) {
+
+        console.log('------------');
+        console.log('yo', results);
+
+        var simulator = results[0];
+        var port = results[1];
+
+        launchSimulator(simulator, port).then(function(simLaunched) {
+          console.log('SIMU', simLaunched);
+          resolve(simLaunched);
+        }, function(simLaunchError) {
+          reject(simLaunchError);
+        });
+
+      }, function(error) {
+        reject(error);
+      });
+    
+  });
+}
+
+// Find a simulator that matches the options
+function findSimulator(options) {
+
+  // TODO actually use the options to filter simulators
+  return new Promise(function(resolve, reject) {
+    
+    findSimulators().then(function(results) {
+
+      if(!results || results.length === 0) {
+        reject(new Error('No simulators installed, or cannot find them'));
+      }
+
+      // just returning the first result for now
+      resolve(results[0]);
+
+    }, function(error) {
+      reject(error);
+    });
+
+  });
+
+}
+
+
+function findAvailablePort(options) {
+  return new Promise(function(resolve, reject) {
+    // TODO actually look for available ports
+    resolve(9999);
+  });
+}
+
+
+// Launches the simulator in the specified port
+function launchSimulator(simulator, port) {
+
+  return new Promise(function(resolve, reject) {
+    // TODO option to launch verbose
+    // TODO option to detach
+    startSimulatorProcess({
+      binary: simulator.bin,
+      profile: simulator.profile,
+      port: port
+    }).then(function(results) {
+      // TODO waitUntilSimulatorIsReady
+
+      console.log('simulator started', results);
+      resolve(results);
+    }, function(error) {
+      reject(error);
+    });
+  });
+  
+}
+
+
+function startSimulatorProcess(options) {
+
+  var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
+  
+  if (options.detached) {
+    childOptions.detached = true;
+  }
+
+  if (options.verbose) {
+    childOptions.stdio = [ process.stdin, process.stdout, process.stderr ];
+  }
+
+  // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
+
+  var simulatorProcess = spawn(
+    options.binary,
+    [
+      '-profile', options.profile,
+      '-start-debugger-server', options.port,
+      '-no-remote'
+    ],
+    childOptions
+  );
+
+  return new Promise(function(resolve, reject) {
+    resolve(simulatorProcess);
+  });
+
+}
 
 function portIsReady(port, cb) {
   var defer = Q.defer();
@@ -110,7 +228,7 @@ function runB2G(opts) {
 }
 
 function findPaths(opts) {
-  return new FXOSSimulators(opts).then(function(result) {
+  return new findSimulators(opts).then(function(result) {
     if (!result || !result.length) {
       var errorMsg = 'No simulator found on your machine.';
       if (opts && opts.version) {
@@ -124,6 +242,7 @@ function findPaths(opts) {
   });
 }
 
+/* XXX TODO this function is not used - keeping for reference */
 function startB2G(opts, callback) {
 
   if (typeof opts === 'function') {
@@ -134,7 +253,7 @@ function startB2G(opts, callback) {
   /* Options */
 
   if (opts.force) {
-    new FXPorts({ b2g: true }, function(err, instances) {
+    new findPorts({ b2g: true }, function(err, instances) {
       instances.forEach(function(instance) {
         process.kill(instance.pid);
       });
