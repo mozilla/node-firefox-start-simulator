@@ -35,6 +35,7 @@ function startSimulator(options) {
 
         var simulator = results[0];
         port = results[1];
+        console.log(simulator);
 
         launchSimulator({
           simulator: simulator,
@@ -166,30 +167,36 @@ function launchSimulator(options) {
 
 function startSimulatorProcess(options) {
 
-  var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
-  
-  if (options.detached) {
-    childOptions.detached = true;
-  }
-
-  if (options.verbose) {
-    childOptions.stdio = [ process.stdin, process.stdout, process.stderr ];
-  }
-
-  // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
-
-  var simulatorProcess = spawn(
-    options.binary,
-    [
-      '-profile', options.profile,
-      '-start-debugger-server', options.port,
-      '-no-remote'
-    ],
-    childOptions
-  );
-
   return new Promise(function(resolve, reject) {
-    resolve(simulatorProcess);
+
+    var simulatorBinary = options.binary;
+    var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
+    
+    // Simple sanity check: make sure the simulator binary exists
+    if (!fs.existsSync(simulatorBinary)) {
+      return reject(new Error(simulatorBinary + ' does not exist'));
+    }
+
+    if (options.detached) {
+      childOptions.detached = true;
+    }
+
+    if (options.verbose) {
+      childOptions.stdio = [ process.stdin, process.stdout, process.stderr ];
+    }
+
+    // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
+
+    var simulatorProcess = spawn(
+      simulatorBinary,
+      [
+        '-profile', options.profile,
+        '-start-debugger-server', options.port,
+        '-no-remote'
+      ],
+      childOptions
+    );
+
   });
 
 }
