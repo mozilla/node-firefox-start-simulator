@@ -35,29 +35,15 @@ function startSimulator(options) {
 
         var simulator = results[0];
         port = results[1];
-        console.log(simulator);
 
-        launchSimulator({
-          simulator: simulator,
-          port: port,
-          detached: detached,
-          verbose: verbose
-        }).then(function(simulatorProcess) {
-
-          waitUntilSimulatorIsReady(port).then(function(ready) {
-            resolve({
-              process: simulatorProcess,
-              pid: simulatorProcess.pid,
-              port: port,
-              binary: simulator.bin,
-              profile: simulator.profile
-            });
-          }, function(timedOutError) {
-            reject(timedOutError);
-          });
-          
-        }, function(simLaunchError) {
-          reject(simLaunchError);
+        launchSimulatorAndWaitUntilReady({
+          simulatorBinary: simulator.bin,
+          simulatorProfile: simulator.profile,
+          port: port
+        }).then(function(simulatorDetails) {
+          resolve(simulatorDetails);
+        }, function(simulatorLaunchError) {
+          reject(simulatorLaunchError);
         });
 
       }, function(error) {
@@ -112,17 +98,47 @@ function findAvailablePort(preferredPort) {
 }
 
 
+// Launches the simulator and wait until it's ready to be used
+function launchSimulatorAndWaitUntilReady(options) {
+
+  var port = options.port;
+  var binary = options.simulatorBinary;
+  var profile = options.simulatorProfile;
+
+  return new Promise(function(resolve, reject) {
+
+    launchSimulator(options)
+      .then(function(simulatorProcess) {
+        waitUntilSimulatorIsReady(port).then(function(ready) {
+          resolve({
+            process: simulatorProcess,
+            pid: simulatorProcess.pid,
+            port: port,
+            binary: simulatorBinary,
+            profile: simulatorProfile
+          });
+        }, function(timedOutError) {
+          reject(timedOutError);
+        });
+      }, function(simulatorLaunchError) {
+        reject(simulatorLaunchError);
+      });
+
+  });
+}
+
 // Launches the simulator in the specified port
 function launchSimulator(options) {
 
-  var simulator = options.simulator;
+  var simulatorBinary = options.simulatorBinary;
+  var simulatorProfile = options.simulatorProfile;
   var port = options.port;
   var detached = options.detached;
 
   return new Promise(function(resolve, reject) {
     startSimulatorProcess({
-      binary: simulator.bin,
-      profile: simulator.profile,
+      binary: simulatorBinary,
+      profile: simulatorProfile,
       port: port,
       detached: detached,
       verbose: options.verbose
