@@ -35,11 +35,16 @@ function startSimulator(options) {
           port: port,
           detached: detached,
           verbose: verbose
-        }).then(function(simLaunched) {
+        }).then(function(simulatorProcess) {
 
-          console.log('SIMU', simLaunched);
           waitUntilSimulatorIsReady(port).then(function(ready) {
-            resolve(simLaunched);
+            resolve({
+              process: simulatorProcess,
+              pid: simulatorProcess.pid,
+              port: port,
+              binary: simulator.bin,
+              profile: simulator.profile
+            });
           }, function(timedOutError) {
             reject(timedOutError);
           });
@@ -180,7 +185,6 @@ function waitUntilSimulatorIsReady(port) {
   return new Promise(function(resolve, reject) {
 
     function ping() {
-      console.log('ping?');
       var socket = new net.Socket();
       socket
         .on('connect', function() {
