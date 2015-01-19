@@ -37,9 +37,11 @@ function startSimulator(options) {
         port = results[1];
 
         launchSimulatorAndWaitUntilReady({
-          simulatorBinary: simulator.bin,
-          simulatorProfile: simulator.profile,
-          port: port
+          binary: simulator.bin,
+          profile: simulator.profile,
+          port: port,
+          detached: detached,
+          verbose: verbose
         }).then(function(simulatorDetails) {
           resolve(simulatorDetails);
         }, function(simulatorLaunchError) {
@@ -49,7 +51,7 @@ function startSimulator(options) {
       }, function(error) {
         reject(error);
       });
-    
+
   });
 }
 
@@ -102,27 +104,26 @@ function findAvailablePort(preferredPort) {
 function launchSimulatorAndWaitUntilReady(options) {
 
   var port = options.port;
-  var binary = options.simulatorBinary;
-  var profile = options.simulatorProfile;
+  var binary = options.binary;
+  var profile = options.profile;
 
   return new Promise(function(resolve, reject) {
 
-    launchSimulator(options)
-      .then(function(simulatorProcess) {
-        waitUntilSimulatorIsReady(port).then(function(ready) {
-          resolve({
-            process: simulatorProcess,
-            pid: simulatorProcess.pid,
-            port: port,
-            binary: simulatorBinary,
-            profile: simulatorProfile
-          });
-        }, function(timedOutError) {
-          reject(timedOutError);
+    launchSimulator(options).then(function(simulatorProcess) {
+      waitUntilSimulatorIsReady(port).then(function() {
+        resolve({
+          process: simulatorProcess,
+          pid: simulatorProcess.pid,
+          port: port,
+          binary: binary,
+          profile: profile
         });
-      }, function(simulatorLaunchError) {
-        reject(simulatorLaunchError);
+      }, function(timedOutError) {
+          reject(timedOutError);
       });
+    }, function(simulatorLaunchError) {
+      reject(simulatorLaunchError);
+    });
 
   });
 }
@@ -130,19 +131,11 @@ function launchSimulatorAndWaitUntilReady(options) {
 // Launches the simulator in the specified port
 function launchSimulator(options) {
 
-  var simulatorBinary = options.simulatorBinary;
-  var simulatorProfile = options.simulatorProfile;
-  var port = options.port;
   var detached = options.detached;
 
   return new Promise(function(resolve, reject) {
-    startSimulatorProcess({
-      binary: simulatorBinary,
-      profile: simulatorProfile,
-      port: port,
-      detached: detached,
-      verbose: options.verbose
-    }).then(function(simulatorProcess) {
+
+    startSimulatorProcess(options).then(function(simulatorProcess) {
 
       // If the simulator is not detached, we need to kill its process
       // once our own process exits
@@ -202,6 +195,7 @@ function startSimulatorProcess(options) {
     }
 
     // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
+    // https://github.com/nicola/fxos-start/blob/6b4794814e3a5c97d60abf2ab8619c635d6c3c94/index.js#L55-L57
 
     var simulatorProcess = spawn(
       simulatorBinary,
@@ -212,6 +206,8 @@ function startSimulatorProcess(options) {
       ],
       childOptions
     );
+
+    resolve(simulatorProcess);
 
   });
 
@@ -258,117 +254,6 @@ function waitUntilSimulatorIsReady(port) {
 
 }
 
-function portIsReady(port, cb) {
-  var defer = Q.defer();
-
-  function ping() {
-    var sock = new net.Socket();
-    sock
-      .on('connect', function() {
-        defer.resolve();
-        sock.destroy();
-      })
-      .on('error', function(e) {
-        if (e && e.code !== 'ECONNREFUSED') {
-          throw e;
-        }
-        sock.destroy();
-        setTimeout(function() {
-          ping(defer);
-        }, 1000);
-      })
-      .connect(port,'localhost');
-  }
-  ping();
-  return defer.promise;
-}
-
-// XXX TODO Not using this one in favour of startSimulatorProcess, keeping for reference
-function commandB2G(opts) {
-  var defer = Q.defer();
-
-  var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
-
-  if (opts.exit) {
-    childOptions.detached = true;
-  }
-
-  if (opts.verbose) {
-    childOptions.stdio = [process.stdin,  process.stdout, process.stderr];
-  }
-
-  if (opts.stdin) {
-    childOptions.stdio[0] = fs.openSync(opts.stdin, 'a');
-  }
-  if (opts.stdout) {
-    childOptions.stdio[1] = fs.openSync(opts.stdout, 'a');
-  }
-  if (opts.stderr) {
-    childOptions.stdio[2] = fs.openSync(opts.stderr, 'a');
-  }
-
-  var simProcess = spawn(
-    opts.bin,
-    ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
-    childOptions
-  );
-
-  if (!opts.exit) {
-    // From https://www.exratione.com/2013/05/die-child-process-die/
-    process.once('exit', function() {
-      simProcess.kill('SIGTERM');
-    });
-
-    process.once('uncaughtException', function(error) {
-      if (process.listeners('uncaughtException').length === 0) {
-        simProcess.kill('SIGTERM');
-        throw error;
-      }
-    });
-  }
-
-  if (opts.exit) {
-    simProcess.unref();
-  }
-  defer.resolve(simProcess);
-  return defer.promise;
-}
-
-function createClient(simulator) {
-  var deferred = Q.defer();
-  var client = new FirefoxClient();
-  client.connect(simulator.port, function(err) {
-    if (err) {
-      deferred.reject(err);
-    }
-    simulator.client = client;
-    deferred.resolve(simulator);
-  });
-  return deferred.promise;
-}
-
-function runB2G(opts) {
-  var commandReady = commandB2G(opts);
-  var portReady = commandReady.then(portIsReady.bind(null, opts.port));
-  return portReady.then(function() {
-    return commandReady;
-  });
-}
-
-function findPaths(opts) {
-  return new findSimulators(opts).then(function(result) {
-    if (!result || !result.length) {
-      var errorMsg = 'No simulator found on your machine.';
-      if (opts && opts.version) {
-        errorMsg = 'No simulator for Firefox version ' + opts.version + ' found on your machine.';
-      }
-      console.error(new Error(errorMsg));
-      process.exit(1);
-    }
-    var latestB2G = result[result.length - 1];
-    return latestB2G;
-  });
-}
 
 /* XXX TODO this function is not used - keeping for reference */
 function startB2G(opts, callback) {
