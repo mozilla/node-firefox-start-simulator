@@ -9,7 +9,7 @@ var net = require('net');
 var findPorts = require('node-firefox-find-ports');
 var spawn = require('child_process').spawn;
 var FirefoxClient = require('firefox-client');
-var portfinder = require('portfinder');
+var portFinder = require('portfinder');
 var fs = require('fs');
 var __ = require('underscore');
 
@@ -21,14 +21,15 @@ function startSimulator(options) {
 
   var detached = options.detached ? true : false;
   var verbose = options.verbose ? true : false;
+  var port = options.port;
 
   return new Promise(function(resolve, reject) {
 
-    Promise.all([ findSimulator(/* TODO options */), findAvailablePort() ])
+    Promise.all([ findSimulator(/* TODO options */), findAvailablePort(port) ])
       .then(function(results) {
 
         var simulator = results[0];
-        var port = results[1];
+        port = results[1];
 
         launchSimulator({
           simulator: simulator,
@@ -84,11 +85,25 @@ function findSimulator(options) {
 }
 
 
-function findAvailablePort(options) {
+function findAvailablePort(preferredPort) {
+
   return new Promise(function(resolve, reject) {
-    // TODO actually look for available ports
-    resolve(9999);
+
+    // Start searching with the preferred port, if specified
+    if(preferredPort !== undefined) {
+      portFinder.basePort = preferredPort;
+    }
+    
+    portFinder.getPort(function(err, port) {
+      if(err) {
+        reject(err);
+      } else {
+        console.log('got this port', port);
+        resolve(port);
+      }
+    });
   });
+
 }
 
 
