@@ -23,9 +23,14 @@ function startSimulator(options) {
   var verbose = options.verbose ? true : false;
   var port = options.port;
 
+  var simulatorOptions = {};
+  if(options.version) {
+    simulatorOptions.version = options.version;
+  }
+
   return new Promise(function(resolve, reject) {
 
-    Promise.all([ findSimulator(/* TODO options */), findAvailablePort(port) ])
+    Promise.all([ findSimulator(simulatorOptions), findAvailablePort(port) ])
       .then(function(results) {
 
         var simulator = results[0];
@@ -64,10 +69,9 @@ function startSimulator(options) {
 // Find a simulator that matches the options
 function findSimulator(options) {
 
-  // TODO actually use the options to filter simulators
   return new Promise(function(resolve, reject) {
-    
-    findSimulators().then(function(results) {
+
+    findSimulators(options).then(function(results) {
 
       if(!results || results.length === 0) {
         reject(new Error('No simulators installed, or cannot find them'));
