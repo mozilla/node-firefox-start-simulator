@@ -20,7 +20,7 @@ function startSimulator(options) {
   /* TODO if options.force, it should find running simulators and kill them */
 
   var detached = options.detached ? true : false;
-  console.log('detached', detached);
+  var verbose = options.verbose ? true : false;
 
   return new Promise(function(resolve, reject) {
 
@@ -36,7 +36,8 @@ function startSimulator(options) {
         launchSimulator({
           simulator: simulator,
           port: port,
-          detached: detached
+          detached: detached,
+          verbose: verbose
         }).then(function(simLaunched) {
           console.log('SIMU', simLaunched);
           // TODO don't resolve yet, waitUntilSimulatorIsReady
@@ -92,12 +93,12 @@ function launchSimulator(options) {
   var detached = options.detached;
 
   return new Promise(function(resolve, reject) {
-    // TODO option to launch verbose
     startSimulatorProcess({
       binary: simulator.bin,
       profile: simulator.profile,
       port: port,
-      detached: detached
+      detached: detached,
+      verbose: options.verbose
     }).then(function(simulatorProcess) {
 
       console.log('simulator started', simulatorProcess);
