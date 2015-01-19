@@ -19,11 +19,12 @@ module.exports = startSimulator;
 function startSimulator(options) {
   /* TODO if options.force, it should find running simulators and kill them */
 
-  // findSimulators, findPort -> launch simulator, wait until ready
+  var detached = options.detached ? true : false;
+  console.log('detached', detached);
 
   return new Promise(function(resolve, reject) {
 
-    Promise.all([ findSimulator(), findAvailablePort() ])
+    Promise.all([ findSimulator(/* TODO options */), findAvailablePort() ])
       .then(function(results) {
 
         console.log('------------');
@@ -32,8 +33,13 @@ function startSimulator(options) {
         var simulator = results[0];
         var port = results[1];
 
-        launchSimulator(simulator, port).then(function(simLaunched) {
+        launchSimulator({
+          simulator: simulator,
+          port: port,
+          detached: detached
+        }).then(function(simLaunched) {
           console.log('SIMU', simLaunched);
+          // TODO don't resolve yet, waitUntilSimulatorIsReady
           resolve(simLaunched);
         }, function(simLaunchError) {
           reject(simLaunchError);
@@ -79,23 +85,55 @@ function findAvailablePort(options) {
 
 
 // Launches the simulator in the specified port
-function launchSimulator(simulator, port) {
+function launchSimulator(options) {
+
+  var simulator = options.simulator;
+  var port = options.port;
+  var detached = options.detached;
 
   return new Promise(function(resolve, reject) {
     // TODO option to launch verbose
-    // TODO option to detach
     startSimulatorProcess({
       binary: simulator.bin,
       profile: simulator.profile,
-      port: port
-    }).then(function(results) {
-      // TODO waitUntilSimulatorIsReady
+      port: port,
+      detached: detached
+    }).then(function(simulatorProcess) {
 
-      console.log('simulator started', results);
-      resolve(results);
+      console.log('simulator started', simulatorProcess);
+
+      // If the simulator is not detached, we need to kill its process
+      // once our own process exits
+      if (!detached) {
+
+        process.once('exit', function() {
+          simulatorProcess.kill('SIGTERM');
+        });
+
+        process.once('uncaughtException', function(error) {
+          if (process.listeners('uncaughtException').length === 0) {
+            simulatorProcess.kill('SIGTERM');
+            throw error;
+          }
+        });
+
+      } else {
+
+        // Totally make sure we don't keep references to this new child--
+        // this removes the child from the parent's event loop
+        // See http://nodejs.org/api/child_process.html#child_process_options_detached
+        simulatorProcess.unref();
+
+      }
+
+      resolve(simulatorProcess);
+
     }, function(error) {
+
       reject(error);
+
     });
+
   });
   
 }
