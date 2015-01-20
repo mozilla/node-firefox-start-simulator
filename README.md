@@ -32,8 +32,6 @@ npm install node-firefox-start-simulator
 
 ## Usage
 
-#### Callback
-
 ```javascript
 var startSimulator = require('node-firefox-start-simulator');
 
