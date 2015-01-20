@@ -17,7 +17,6 @@ var __ = require('underscore');
 module.exports = startSimulator;
 
 function startSimulator(options) {
-  /* TODO if options.force, it should find running simulators and kill them */
 
   var detached = options.detached ? true : false;
   var verbose = options.verbose ? true : false;
@@ -254,65 +253,12 @@ function waitUntilSimulatorIsReady(port) {
 
 }
 
-
-/* XXX TODO this function is not used - keeping for reference */
-function startB2G(opts, callback) {
-
-  if (typeof opts === 'function') {
-    callback = opts;
-  }
-  opts = __.clone(opts) || {};
-
-  /* Options */
-
-  if (opts.force) {
-    new findPorts({ b2g: true }, function(err, instances) {
-      instances.forEach(function(instance) {
-        process.kill(instance.pid);
-      });
-    });
-  }
-
-  /* Promises */
-
-  // Make sure we have bin, profile and port
-  var pathsReady = (opts.bin && opts.profile) ? { bin: opts.bin, opts: opts.profile } : findPaths(opts);
-  var portReady = opts.port || Q.ninvoke(portfinder, 'getPort', opts);
-  var optsReady = Q.all([pathsReady, portReady])
-    .spread(function(paths, port) {
-      // Cloning bevause opts should be unaltered
-      var simulator = __.clone(opts);
-      simulator.bin = paths.bin;
-      simulator.profile = paths.profile;
-      simulator.port = port;
-      if (paths && paths.release) {
-        simulator.release = paths.release;
-      }
-      else if (opts.bin && opts.profile && opts.release.length === 1) {
-        simulator.release = simulator.release[0];
-      }
-
-      return simulator;
-    });
-
-  var runReady = optsReady.then(runB2G);
-
-  return Q.all([optsReady, runReady])
-    .spread(function(opts, simProcess) {
-      opts.process = simProcess;
-      opts.pid = simProcess.pid;
-      return opts;
-    })
-    .then(function(simulator) {
-      return opts.connect ? createClient(simulator) : simulator;
-    })
-    .nodeify(callback);
-
-}
-
+// These actually make it so that child process get killed when this process
+// gets killed (except when the child process is detached, obviously)
 process.once('SIGTERM', function() {
   process.exit(0);
 });
 process.once('SIGINT', function() {
   process.exit(0);
 });
+
