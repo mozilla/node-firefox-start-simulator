@@ -36,9 +36,11 @@ npm install node-firefox-start-simulator
 
 ```javascript
 var startSimulator = require('node-firefox-start-simulator');
-startSimulator(options) // returns a Promise
-  .then(function(simulator) {
-  });
+
+// `startSimulator` returns a Promise
+startSimulator(options).then(function(simulator) {
+
+});
 ```
 
 where `options` is a plain `Object` with any of the following:

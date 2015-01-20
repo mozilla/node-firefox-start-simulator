@@ -24,27 +24,26 @@ function startSimulator(options) {
 
   return new Promise(function(resolve, reject) {
 
-    Promise.all([ findSimulator(simulatorOptions), findAvailablePort(port) ])
-      .then(function(results) {
+    Promise.all([findSimulator(simulatorOptions), findAvailablePort(port)]).then(function(results) {
 
-        var simulator = results[0];
-        port = results[1];
+      var simulator = results[0];
+      port = results[1];
 
-        launchSimulatorAndWaitUntilReady({
-          binary: simulator.bin,
-          profile: simulator.profile,
-          port: port,
-          detached: detached,
-          verbose: verbose
-        }).then(function(simulatorDetails) {
-          resolve(simulatorDetails);
-        }, function(simulatorLaunchError) {
-          reject(simulatorLaunchError);
-        });
-
-      }, function(error) {
-        reject(error);
+      launchSimulatorAndWaitUntilReady({
+        binary: simulator.bin,
+        profile: simulator.profile,
+        port: port,
+        detached: detached,
+        verbose: verbose
+      }).then(function(simulatorDetails) {
+        resolve(simulatorDetails);
+      }, function(simulatorLaunchError) {
+        reject(simulatorLaunchError);
       });
+
+    }, function(error) {
+      reject(error);
+    });
 
   });
 }
@@ -59,7 +58,7 @@ function findSimulator(options) {
       if (!results || results.length === 0) {
         reject(new Error('No simulators installed, or cannot find them'));
       }
-
+      
       // just returning the first result for now
       resolve(results[0]);
 
@@ -134,7 +133,6 @@ function launchSimulator(options) {
       // If the simulator is not detached, we need to kill its process
       // once our own process exits
       if (!detached) {
-
         process.once('exit', function() {
           simulatorProcess.kill('SIGTERM');
         });
@@ -145,22 +143,17 @@ function launchSimulator(options) {
             throw error;
           }
         });
-
       } else {
-
         // Totally make sure we don't keep references to this new child--
         // this removes the child from the parent's event loop
         // See http://nodejs.org/api/child_process.html#child_process_options_detached
         simulatorProcess.unref();
-
       }
 
       resolve(simulatorProcess);
 
     }, function(error) {
-
       reject(error);
-
     });
 
   });
@@ -218,17 +211,16 @@ function waitUntilSimulatorIsReady(port) {
 
     function ping() {
       var socket = new net.Socket();
-      socket
-        .on('connect', function() {
-          resolve();
-          socket.destroy();
-        }).on('error', function(error) {
-          if (error && error.code !== 'ECONNREFUSED') {
-            throw error;
-          }
-          socket.destroy();
-          maybeTryAgain();
-        }).connect(port, 'localhost');
+      socket.on('connect', function() {
+        resolve();
+        socket.destroy();
+      }).on('error', function(error) {
+        if (error && error.code !== 'ECONNREFUSED') {
+          throw error;
+        }
+        socket.destroy();
+        maybeTryAgain();
+      }).connect(port, 'localhost');
     }
 
     function maybeTryAgain() {
