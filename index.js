@@ -8,9 +8,6 @@ var spawn = require('child_process').spawn;
 var fs = require('fs');
 var portFinder = require('portfinder');
 var findSimulators = require('node-firefox-find-simulators');
-var findPorts = require('node-firefox-find-ports');
-var FirefoxClient = require('firefox-client');
-
 
 module.exports = startSimulator;
 
@@ -21,7 +18,7 @@ function startSimulator(options) {
   var port = options.port;
 
   var simulatorOptions = {};
-  if(options.version) {
+  if (options.version) {
     simulatorOptions.version = options.version;
   }
 
@@ -59,7 +56,7 @@ function findSimulator(options) {
 
     findSimulators(options).then(function(results) {
 
-      if(!results || results.length === 0) {
+      if (!results || results.length === 0) {
         reject(new Error('No simulators installed, or cannot find them'));
       }
 
@@ -80,12 +77,12 @@ function findAvailablePort(preferredPort) {
   return new Promise(function(resolve, reject) {
 
     // Start searching with the preferred port, if specified
-    if(preferredPort !== undefined) {
+    if (preferredPort !== undefined) {
       portFinder.basePort = preferredPort;
     }
     
     portFinder.getPort(function(err, port) {
-      if(err) {
+      if (err) {
         reject(err);
       } else {
         console.log('got this port', port);
@@ -226,7 +223,7 @@ function waitUntilSimulatorIsReady(port) {
           resolve();
           socket.destroy();
         }).on('error', function(error) {
-          if(error && error.code !== 'ECONNREFUSED') {
+          if (error && error.code !== 'ECONNREFUSED') {
             throw error;
           }
           socket.destroy();
@@ -237,7 +234,7 @@ function waitUntilSimulatorIsReady(port) {
     function maybeTryAgain() {
       elapsedTime += attemptInterval;
 
-      if(elapsedTime < maxTimeout) {
+      if (elapsedTime < maxTimeout) {
         setTimeout(ping, attemptInterval);
       } else {
         reject(new Error('Timed out trying to connect to the simulator in ' + port));
