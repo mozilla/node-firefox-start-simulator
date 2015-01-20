@@ -10,9 +10,7 @@
     "node-firefox-find-simulators": "git+https://git@github.com/mozilla/node-firefox-find-simulators.git",
     "node-firefox-ports": "git+https://git@github.com/mozilla/node-firefox-ports.git",
     "nomnom": "^1.8.0",
-    "portfinder": "^0.2.1",
-    "q": "^1.0.1",
-    "underscore": "^1.7.0"
+    "portfinder": "^0.2.1"
   },
   "devDependencies": {
     "gulp": "^3.8.10",

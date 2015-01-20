@@ -3,15 +3,13 @@
 // See https://github.com/jshint/jshint/issues/1747 for context
 /* global -Promise */
 var Promise = require('es6-promise').Promise;
-var findSimulators = require('node-firefox-find-simulators');
-var Q = require('q');
 var net = require('net');
-var findPorts = require('node-firefox-find-ports');
 var spawn = require('child_process').spawn;
-var FirefoxClient = require('firefox-client');
-var portFinder = require('portfinder');
 var fs = require('fs');
-var __ = require('underscore');
+var portFinder = require('portfinder');
+var findSimulators = require('node-firefox-find-simulators');
+var findPorts = require('node-firefox-find-ports');
+var FirefoxClient = require('firefox-client');
 
 
 module.exports = startSimulator;
