@@ -1,5 +1,5 @@
 {
-  "name": "node-firefox-start",
+  "name": "node-firefox-start-simulator",
   "version": "1.0.0",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
@@ -30,7 +30,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mozilla/node-firefox-start.git"
+    "url": "https://github.com/mozilla/node-firefox-start-simulator.git"
   },
   "keywords": [
     "firefox",
@@ -41,10 +41,15 @@
     "fxos",
     "start"
   ],
-  "author": "Nicola Greco <me@nicola.io> (http://nicolagreco.com/)",
+  "author": "Mozilla (https://mozilla.org/)",
+  "contributors": [
+    "Nicola Greco <me@nicola.io> (http://nicolagreco.com/)",
+    "Brittany Storoz <bstoroz@mozilla.com>",
+    "Soledad Penadés <listas@soledadpenades.com> (http://soledadpenades.com/)"
+  ],
   "license": "Apache 2.0",
   "bugs": {
-    "url": "https://github.com/mozilla/node-firefox-start/issues"
+    "url": "https://github.com/mozilla/node-firefox-start-simulator/issues"
   },
-  "homepage": "https://github.com/mozilla/node-firefox-start"
+  "homepage": "https://github.com/mozilla/node-firefox-start-simulator"
 }
