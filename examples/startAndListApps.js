@@ -3,7 +3,7 @@
 var startSimulator = require('../index');
 var FirefoxClient = require('firefox-client');
 
-startSimulator({ connect: true, port: 8002 }).then(function(simulator) {
+startSimulator({ port: 8002 }).then(function(simulator) {
 
   var client = new FirefoxClient();
   client.connect(simulator.port, function(err, result) {
