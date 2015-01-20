@@ -1,186 +1,259 @@
 'use strict';
 
-var FXOSSimulators = require('node-firefox-find-simulators');
-var Q = require('q');
+// See https://github.com/jshint/jshint/issues/1747 for context
+/* global -Promise */
+var Promise = require('es6-promise').Promise;
 var net = require('net');
-var FXPorts = require('node-firefox-ports');
 var spawn = require('child_process').spawn;
-var FirefoxClient = require('firefox-client');
-var portfinder = require('portfinder');
 var fs = require('fs');
-var __ = require('underscore');
+var portFinder = require('portfinder');
+var findSimulators = require('node-firefox-find-simulators');
 
+module.exports = startSimulator;
 
-module.exports = startB2G;
+function startSimulator(options) {
 
-function portIsReady(port, cb) {
-  var defer = Q.defer();
+  var detached = options.detached ? true : false;
+  var verbose = options.verbose ? true : false;
+  var port = options.port;
 
-  function ping() {
-    var sock = new net.Socket();
-    sock
-      .on('connect', function() {
-        defer.resolve();
-        sock.destroy();
-      })
-      .on('error', function(e) {
-        if (e && e.code !== 'ECONNREFUSED') {
-          throw e;
-        }
-        sock.destroy();
-        setTimeout(function() {
-          ping(defer);
-        }, 1000);
-      })
-      .connect(port,'localhost');
-  }
-  ping();
-  return defer.promise;
-}
-
-function commandB2G(opts) {
-  var defer = Q.defer();
-
-  var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
-
-  if (opts.exit) {
-    childOptions.detached = true;
+  var simulatorOptions = {};
+  if (options.version) {
+    simulatorOptions.version = options.version;
   }
 
-  if (opts.verbose) {
-    childOptions.stdio = [process.stdin,  process.stdout, process.stderr];
-  }
+  return new Promise(function(resolve, reject) {
 
-  if (opts.stdin) {
-    childOptions.stdio[0] = fs.openSync(opts.stdin, 'a');
-  }
-  if (opts.stdout) {
-    childOptions.stdio[1] = fs.openSync(opts.stdout, 'a');
-  }
-  if (opts.stderr) {
-    childOptions.stdio[2] = fs.openSync(opts.stderr, 'a');
-  }
+    Promise.all([ findSimulator(simulatorOptions), findAvailablePort(port) ])
+      .then(function(results) {
 
-  var simProcess = spawn(
-    opts.bin,
-    ['-profile', opts.profile, '-start-debugger-server', opts.port, '-no-remote'],
-    childOptions
-  );
+        var simulator = results[0];
+        port = results[1];
 
-  if (!opts.exit) {
-    // From https://www.exratione.com/2013/05/die-child-process-die/
-    process.once('exit', function() {
-      simProcess.kill('SIGTERM');
-    });
+        launchSimulatorAndWaitUntilReady({
+          binary: simulator.bin,
+          profile: simulator.profile,
+          port: port,
+          detached: detached,
+          verbose: verbose
+        }).then(function(simulatorDetails) {
+          resolve(simulatorDetails);
+        }, function(simulatorLaunchError) {
+          reject(simulatorLaunchError);
+        });
 
-    process.once('uncaughtException', function(error) {
-      if (process.listeners('uncaughtException').length === 0) {
-        simProcess.kill('SIGTERM');
-        throw error;
-      }
-    });
-  }
-
-  if (opts.exit) {
-    simProcess.unref();
-  }
-  defer.resolve(simProcess);
-  return defer.promise;
-}
-
-function createClient(simulator) {
-  var deferred = Q.defer();
-  var client = new FirefoxClient();
-  client.connect(simulator.port, function(err) {
-    if (err) {
-      deferred.reject(err);
-    }
-    simulator.client = client;
-    deferred.resolve(simulator);
-  });
-  return deferred.promise;
-}
-
-function runB2G(opts) {
-  var commandReady = commandB2G(opts);
-  var portReady = commandReady.then(portIsReady.bind(null, opts.port));
-  return portReady.then(function() {
-    return commandReady;
-  });
-}
-
-function findPaths(opts) {
-  return new FXOSSimulators(opts).then(function(result) {
-    if (!result || !result.length) {
-      var errorMsg = 'No simulator found on your machine.';
-      if (opts && opts.version) {
-        errorMsg = 'No simulator for Firefox version ' + opts.version + ' found on your machine.';
-      }
-      console.error(new Error(errorMsg));
-      process.exit(1);
-    }
-    var latestB2G = result[result.length - 1];
-    return latestB2G;
-  });
-}
-
-function startB2G(opts, callback) {
-
-  if (typeof opts === 'function') {
-    callback = opts;
-  }
-  opts = __.clone(opts) || {};
-
-  /* Options */
-
-  if (opts.force) {
-    new FXPorts({ b2g: true }, function(err, instances) {
-      instances.forEach(function(instance) {
-        process.kill(instance.pid);
+      }, function(error) {
+        reject(error);
       });
-    });
-  }
 
-  /* Promises */
+  });
+}
 
-  // Make sure we have bin, profile and port
-  var pathsReady = (opts.bin && opts.profile) ? { bin: opts.bin, opts: opts.profile } : findPaths(opts);
-  var portReady = opts.port || Q.ninvoke(portfinder, 'getPort', opts);
-  var optsReady = Q.all([pathsReady, portReady])
-    .spread(function(paths, port) {
-      // Cloning bevause opts should be unaltered
-      var simulator = __.clone(opts);
-      simulator.bin = paths.bin;
-      simulator.profile = paths.profile;
-      simulator.port = port;
-      if (paths && paths.release) {
-        simulator.release = paths.release;
-      }
-      else if (opts.bin && opts.profile && opts.release.length === 1) {
-        simulator.release = simulator.release[0];
+// Find a simulator that matches the options
+function findSimulator(options) {
+
+  return new Promise(function(resolve, reject) {
+
+    findSimulators(options).then(function(results) {
+
+      if (!results || results.length === 0) {
+        reject(new Error('No simulators installed, or cannot find them'));
       }
 
-      return simulator;
+      // just returning the first result for now
+      resolve(results[0]);
+
+    }, function(error) {
+      reject(error);
     });
 
-  var runReady = optsReady.then(runB2G);
-
-  return Q.all([optsReady, runReady])
-    .spread(function(opts, simProcess) {
-      opts.process = simProcess;
-      opts.pid = simProcess.pid;
-      return opts;
-    })
-    .then(function(simulator) {
-      return opts.connect ? createClient(simulator) : simulator;
-    })
-    .nodeify(callback);
+  });
 
 }
 
+
+function findAvailablePort(preferredPort) {
+
+  return new Promise(function(resolve, reject) {
+
+    // Start searching with the preferred port, if specified
+    if (preferredPort !== undefined) {
+      portFinder.basePort = preferredPort;
+    }
+    
+    portFinder.getPort(function(err, port) {
+      if (err) {
+        reject(err);
+      } else {
+        console.log('got this port', port);
+        resolve(port);
+      }
+    });
+  });
+
+}
+
+
+// Launches the simulator and wait until it's ready to be used
+function launchSimulatorAndWaitUntilReady(options) {
+
+  var port = options.port;
+  var binary = options.binary;
+  var profile = options.profile;
+
+  return new Promise(function(resolve, reject) {
+
+    launchSimulator(options).then(function(simulatorProcess) {
+      waitUntilSimulatorIsReady(port).then(function() {
+        resolve({
+          process: simulatorProcess,
+          pid: simulatorProcess.pid,
+          port: port,
+          binary: binary,
+          profile: profile
+        });
+      }, function(timedOutError) {
+          reject(timedOutError);
+      });
+    }, function(simulatorLaunchError) {
+      reject(simulatorLaunchError);
+    });
+
+  });
+}
+
+// Launches the simulator in the specified port
+function launchSimulator(options) {
+
+  var detached = options.detached;
+
+  return new Promise(function(resolve, reject) {
+
+    startSimulatorProcess(options).then(function(simulatorProcess) {
+
+      // If the simulator is not detached, we need to kill its process
+      // once our own process exits
+      if (!detached) {
+
+        process.once('exit', function() {
+          simulatorProcess.kill('SIGTERM');
+        });
+
+        process.once('uncaughtException', function(error) {
+          if (process.listeners('uncaughtException').length === 0) {
+            simulatorProcess.kill('SIGTERM');
+            throw error;
+          }
+        });
+
+      } else {
+
+        // Totally make sure we don't keep references to this new child--
+        // this removes the child from the parent's event loop
+        // See http://nodejs.org/api/child_process.html#child_process_options_detached
+        simulatorProcess.unref();
+
+      }
+
+      resolve(simulatorProcess);
+
+    }, function(error) {
+
+      reject(error);
+
+    });
+
+  });
+  
+}
+
+
+function startSimulatorProcess(options) {
+
+  return new Promise(function(resolve, reject) {
+
+    var simulatorBinary = options.binary;
+    var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
+    
+    // Simple sanity check: make sure the simulator binary exists
+    if (!fs.existsSync(simulatorBinary)) {
+      return reject(new Error(simulatorBinary + ' does not exist'));
+    }
+
+    if (options.detached) {
+      childOptions.detached = true;
+    }
+
+    if (options.verbose) {
+      childOptions.stdio = [ process.stdin, process.stdout, process.stderr ];
+    }
+
+    // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
+    // https://github.com/nicola/fxos-start/blob/6b4794814e3a5c97d60abf2ab8619c635d6c3c94/index.js#L55-L57
+
+    var simulatorProcess = spawn(
+      simulatorBinary,
+      [
+        '-profile', options.profile,
+        '-start-debugger-server', options.port,
+        '-no-remote'
+      ],
+      childOptions
+    );
+
+    resolve(simulatorProcess);
+
+  });
+
+}
+
+
+function waitUntilSimulatorIsReady(port) {
+
+  var maxTimeout = 25000;
+  var attemptInterval = 1000;
+  var elapsedTime = 0;
+
+  return new Promise(function(resolve, reject) {
+
+    function ping() {
+      var socket = new net.Socket();
+      socket
+        .on('connect', function() {
+          resolve();
+          socket.destroy();
+        }).on('error', function(error) {
+          if (error && error.code !== 'ECONNREFUSED') {
+            throw error;
+          }
+          socket.destroy();
+          maybeTryAgain();
+        }).connect(port, 'localhost');
+    }
+
+    function maybeTryAgain() {
+      elapsedTime += attemptInterval;
+
+      if (elapsedTime < maxTimeout) {
+        setTimeout(ping, attemptInterval);
+      } else {
+        reject(new Error('Timed out trying to connect to the simulator in ' + port));
+      }
+
+    }
+
+    ping();
+
+  });
+
+}
+
+// These actually make it so that child process get killed when this process
+// gets killed (except when the child process is detached, obviously)
 process.once('SIGTERM', function() {
   process.exit(0);
 });
 process.once('SIGINT', function() {
   process.exit(0);
 });
+

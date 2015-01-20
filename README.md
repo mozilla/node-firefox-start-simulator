@@ -1,6 +1,8 @@
-# node-firefox-start-simulator
+# node-firefox-start-simulator [![Build Status](https://secure.travis-ci.org/mozilla/node-firefox-start-simulator.png?branch=master)](http://travis-ci.org/mozilla/node-firefox-start-simulator)
 
-Start a Firefox OS simulator in NodeJS/CLI.
+> Start a Firefox OS simulator.
+
+[![Install with NPM](https://nodei.co/npm/node-firefox-start-simulator.png?downloads=true&stars=true)](https://nodei.co/npm/node-firefox-start-simulator/)
 
 This is part of the [node-firefox](https://github.com/mozilla/node-firefox) project.
 
@@ -23,35 +25,56 @@ npm install
 ```
 
 ### npm
-This module is not on npm yet.
+
+```sh
+npm install node-firefox-start-simulator
+```
 
 ## Usage
 
 #### Callback
 
 ```javascript
-var start = require('./node-firefox-start-simulator');
-start(function(err, sim) {
-
-})
+var startSimulator = require('node-firefox-start-simulator');
+startSimulator(options) // returns a Promise
+  .then(function(simulator) {
+  });
 ```
 
-#### Promise
+where `options` is a plain `Object` with any of the following:
 
-```javascript
-var start = require('./node-firefox-start-simulator');
-start()
-  .then(
-    function(sim) {
-    },
-    function(err) {
-    }
-  );
-```
+* `detached`: start the simulator as a detached process. If our script is killed, the simulator will still be running.
+* `port`: make the simulator listen to this port for debugging. If not specified, we'll find an available port.
+* `version`: start a simulator in this version. If not specified, we'll start the first simulator that we can find.
+* `verbose`: pipe the output from the simulator to standard I/O. For example, you'll get JavaScript `console.log` messages executed in the simulator.
+
+and `simulator` is an object containing:
+
+* `binary`: path to the simulator binary
+* `profile`: path to the simulator profile
+* `pid`: process id
+* `process`: the actual process object
+* `port`: the port where the simulator is listening for debugging connections
 
 ## Examples
 
-#### Start a simulator on known port, connect and return client
+### Start any simulator on the first available port
+
+```javascript
+var startSimulator = require('node-firefox-start-simulator');
+
+startSimulator().then(function(simulator) {
+  console.log('Started simulator at port', simulator.port);
+}, function(err) {
+  console.log('Error starting a simulator', err);
+});
+
+```
+
+Have a look at the `examples` folder for more!
+
+<!-- These examples need updating to the Promise style and what we're actually returning
+#### Start a simulator on a given port, connect and return client
 
 Start a FirefoxOS simulator and connect to it through [firefox-client](https://github.com/harthur/firefox-client) by returning `client`.
 ```javascript
@@ -102,8 +125,9 @@ start({ connect: true, force: true }, function(err, sim) {
   process.kill(sim.pid);
 })
 ```
+-->
 
-##History
+## History
 
 This is based on initial work on fxos-start by Nicola Greco.
 

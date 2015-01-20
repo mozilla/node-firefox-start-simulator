@@ -1,26 +1,16 @@
 {
-  "name": "node-firefox-start",
+  "name": "node-firefox-start-simulator",
   "version": "1.0.0",
   "description": "Start a Firefox OS simulator",
   "main": "index.js",
   "dependencies": {
-    "async": "^0.9.0",
+    "es6-promise": "^2.0.1",
     "firefox-client": "^0.3.0",
-    "node-firefox-ports": "git+https://git@github.com/mozilla/node-firefox-ports.git",
-    "node-firefox-find-simulators": "git+https://git@github.com/mozilla/node-firefox-find-simulators.git",
-    "nomnom": "^1.8.0",
-    "portfinder": "^0.2.1",
-    "q": "^1.0.1",
-    "underscore": "^1.7.0"
+    "node-firefox-find-simulators": "^1.0.0",
+    "portfinder": "^0.2.1"
   },
   "devDependencies": {
     "gulp": "^3.8.10",
-    "gulp-jscs": "^1.3.1",
-    "gulp-jshint": "^1.9.0",
-    "gulp-json-lint": "0.0.1",
-    "gulp-nodeunit": "0.0.5",
-    "gulp-replace": "^0.5.0",
-    "jshint-stylish": "^1.0.0",
     "mocha": "^1.21.4",
     "should": "^4.0.4",
     "node-firefox-build-tools": "^0.1.0"
@@ -31,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mozilla/node-firefox-start.git"
+    "url": "https://github.com/mozilla/node-firefox-start-simulator.git"
   },
   "keywords": [
     "firefox",
@@ -42,10 +32,16 @@
     "fxos",
     "start"
   ],
-  "author": "Nicola Greco <me@nicola.io> (http://nicolagreco.com/)",
+  "author": "Mozilla (https://mozilla.org/)",
+  "contributors": [
+    "Nicola Greco <me@nicola.io> (http://nicolagreco.com/)",
+    "Rodrigo Silveira (http://blog.rodms.com/)",
+    "Brittany Storoz <bstoroz@mozilla.com>",
+    "Soledad Penadés <listas@soledadpenades.com> (http://soledadpenades.com/)"
+  ],
   "license": "Apache 2.0",
   "bugs": {
-    "url": "https://github.com/mozilla/node-firefox-start/issues"
+    "url": "https://github.com/mozilla/node-firefox-start-simulator/issues"
   },
-  "homepage": "https://github.com/mozilla/node-firefox-start"
+  "homepage": "https://github.com/mozilla/node-firefox-start-simulator"
 }
