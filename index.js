@@ -13,6 +13,7 @@ module.exports = startSimulator;
 
 function startSimulator(options) {
 
+  options = options || {};
   var detached = options.detached ? true : false;
   var verbose = options.verbose ? true : false;
   var port = options.port;
