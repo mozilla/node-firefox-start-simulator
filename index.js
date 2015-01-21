@@ -85,7 +85,6 @@ function findAvailablePort(preferredPort) {
       if (err) {
         reject(err);
       } else {
-        console.log('got this port', port);
         resolve(port);
       }
     });
