@@ -189,7 +189,8 @@ function startSimulatorProcess(options) {
       [
         '-profile', options.profile,
         '-start-debugger-server', options.port,
-        '-no-remote'
+        '-no-remote',
+		'-foreground'
       ],
       childOptions
     );
