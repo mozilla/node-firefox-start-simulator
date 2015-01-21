@@ -13,6 +13,7 @@ module.exports = startSimulator;
 
 function startSimulator(options) {
 
+  options = options || {};
   var detached = options.detached ? true : false;
   var verbose = options.verbose ? true : false;
   var port = options.port;
@@ -84,7 +85,6 @@ function findAvailablePort(preferredPort) {
       if (err) {
         reject(err);
       } else {
-        console.log('got this port', port);
         resolve(port);
       }
     });
@@ -189,7 +189,8 @@ function startSimulatorProcess(options) {
       [
         '-profile', options.profile,
         '-start-debugger-server', options.port,
-        '-no-remote'
+        '-no-remote',
+		'-foreground'
       ],
       childOptions
     );

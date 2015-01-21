@@ -127,6 +127,10 @@ start({ connect: true, force: true }, function(err, sim) {
 ```
 -->
 
+## Documentation
+
+If you want to contribute to this module, it might be interesting to have a look at the way WebIDE launches the simulator. The code for this is in [simulator-process.js](https://dxr.mozilla.org/mozilla-central/source/b2g/simulator/lib/simulator-process.js). Whenever possible, we want to mimic the WebIDE experience as closely as possible.
+
 ## History
 
 This is based on initial work on fxos-start by Nicola Greco.
