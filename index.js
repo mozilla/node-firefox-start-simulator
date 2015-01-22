@@ -106,7 +106,7 @@ function launchSimulatorAndWaitUntilReady(options) {
   return new Promise(function(resolve, reject) {
 
     launchSimulator(options).then(function(simulatorProcess) {
-      waitUntilSimulatorIsReady(port, timeout).then(function() {
+      waitUntilSimulatorIsReady({ port: port, timeout: timeout }).then(function() {
         resolve({
           process: simulatorProcess,
           pid: simulatorProcess.pid,
@@ -205,9 +205,11 @@ function startSimulatorProcess(options) {
 }
 
 
-function waitUntilSimulatorIsReady(port, maxTimeout) {
+function waitUntilSimulatorIsReady(options) {
   var attemptInterval = 1000;
   var elapsedTime = 0;
+  var port = options.port;
+  var timeout = options.timeout;
 
   return new Promise(function(resolve, reject) {
 
@@ -228,7 +230,7 @@ function waitUntilSimulatorIsReady(port, maxTimeout) {
     function maybeTryAgain() {
       elapsedTime += attemptInterval;
 
-      if (elapsedTime < maxTimeout) {
+      if (elapsedTime < timeout) {
         setTimeout(ping, attemptInterval);
       } else {
         reject(new Error('Timed out trying to connect to the simulator in ' + port));
