@@ -17,6 +17,7 @@ function startSimulator(options) {
   var detached = options.detached ? true : false;
   var verbose = options.verbose ? true : false;
   var port = options.port;
+  var timeout = options.timeout || 25000;
 
   var simulatorOptions = {};
   if (options.version) {
@@ -35,7 +36,8 @@ function startSimulator(options) {
         profile: simulator.profile,
         port: port,
         detached: detached,
-        verbose: verbose
+        verbose: verbose,
+        timeout: timeout
       }).then(function(simulatorDetails) {
         resolve(simulatorDetails);
       }, function(simulatorLaunchError) {
@@ -99,11 +101,12 @@ function launchSimulatorAndWaitUntilReady(options) {
   var port = options.port;
   var binary = options.binary;
   var profile = options.profile;
+  var timeout = options.timeout;
 
   return new Promise(function(resolve, reject) {
 
     launchSimulator(options).then(function(simulatorProcess) {
-      waitUntilSimulatorIsReady(port).then(function() {
+      waitUntilSimulatorIsReady({ port: port, timeout: timeout }).then(function() {
         resolve({
           process: simulatorProcess,
           pid: simulatorProcess.pid,
@@ -202,11 +205,11 @@ function startSimulatorProcess(options) {
 }
 
 
-function waitUntilSimulatorIsReady(port) {
-
-  var maxTimeout = 25000;
+function waitUntilSimulatorIsReady(options) {
   var attemptInterval = 1000;
   var elapsedTime = 0;
+  var port = options.port;
+  var timeout = options.timeout;
 
   return new Promise(function(resolve, reject) {
 
@@ -227,7 +230,7 @@ function waitUntilSimulatorIsReady(port) {
     function maybeTryAgain() {
       elapsedTime += attemptInterval;
 
-      if (elapsedTime < maxTimeout) {
+      if (elapsedTime < timeout) {
         setTimeout(ping, attemptInterval);
       } else {
         reject(new Error('Timed out trying to connect to the simulator in ' + port));
