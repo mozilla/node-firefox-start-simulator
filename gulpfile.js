@@ -1,3 +1,4 @@
 var gulp = require('gulp');
+var buildTools = require('node-firefox-build-tools');
 
-require('node-firefox-build-tools').loadGulpTasks(gulp);
+buildTools.loadGulpTasks(gulp);
