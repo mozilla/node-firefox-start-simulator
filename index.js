@@ -37,7 +37,8 @@ function startSimulator(options) {
         port: port,
         detached: detached,
         verbose: verbose,
-        timeout: timeout
+        timeout: timeout,
+        version: simulator.version
       }).then(function(simulatorDetails) {
         resolve(simulatorDetails);
       }, function(simulatorLaunchError) {
@@ -170,6 +171,7 @@ function startSimulatorProcess(options) {
 
     var simulatorBinary = options.binary;
     var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
+    var startDebuggerServer = '-start-debugger-server';
     
     // Simple sanity check: make sure the simulator binary exists
     if (!fs.existsSync(simulatorBinary)) {
@@ -184,6 +186,10 @@ function startSimulatorProcess(options) {
       childOptions.stdio = [ process.stdin, process.stdout, process.stderr ];
     }
 
+    if (options.version === '1.3' || options.version === '1.2') {
+      startDebuggerServer = '-dbgport';
+    }
+
     // TODO do we want to pipe stdin/stdout/stderr as in commandB2G?
     // https://github.com/nicola/fxos-start/blob/6b4794814e3a5c97d60abf2ab8619c635d6c3c94/index.js#L55-L57
 
@@ -191,7 +197,7 @@ function startSimulatorProcess(options) {
       simulatorBinary,
       [
         '-profile', options.profile,
-        '-start-debugger-server', options.port,
+        startDebuggerServer, options.port,
         '-no-remote',
 		'-foreground'
       ],
