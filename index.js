@@ -32,7 +32,7 @@ function startSimulator(options) {
       port = results[1];
 
       launchSimulatorAndWaitUntilReady({
-        binary: simulator.bin,
+        binary: simulator.bin || simulator.binary,
         profile: simulator.profile,
         port: port,
         detached: detached,
@@ -52,6 +52,38 @@ function startSimulator(options) {
   });
 }
 
+// Helper function to start multiple simulators with common default options
+startSimulator.all = function (commonOptions) {
+  return function (simulators) {
+
+    // findSimulators() output can include multiple emulators for the same
+    // version. Filter that down to unique versions.
+    var seenVersions = {};
+    var uniqueVersionSimulators = simulators.filter(function (simulator) {
+      var key = simulator.version;
+      if (key in seenVersions) {
+        return false;
+      } else {
+        seenVersions[key] = true;
+        return true;
+      }
+    });
+
+    // Start all the simulators, using the common options for each.
+    return Promise.all(uniqueVersionSimulators.map(function (simulator) {
+      var options = {};
+      for (var key in commonOptions) {
+        options[key] = commonOptions[key];
+      }
+      for (var key in simulator) {
+        options[key] = simulator[key];
+      }
+      return startSimulator(options);
+    }));
+
+  };
+};
+
 // Find a simulator that matches the options
 function findSimulator(options) {
 
@@ -62,7 +94,7 @@ function findSimulator(options) {
       if (!results || results.length === 0) {
         reject(new Error('No simulators installed, or cannot find them'));
       }
-      
+
       // just returning the first result for now
       resolve(results[0]);
 
@@ -83,7 +115,7 @@ function findAvailablePort(preferredPort) {
     if (preferredPort !== undefined) {
       portFinder.basePort = preferredPort;
     }
-    
+
     portFinder.getPort(function(err, port) {
       if (err) {
         reject(err);
@@ -161,7 +193,7 @@ function launchSimulator(options) {
     });
 
   });
-  
+
 }
 
 
@@ -172,7 +204,7 @@ function startSimulatorProcess(options) {
     var simulatorBinary = options.binary;
     var childOptions = { stdio: ['ignore', 'ignore', 'ignore'] };
     var startDebuggerServer = '-start-debugger-server';
-    
+
     // Simple sanity check: make sure the simulator binary exists
     if (!fs.existsSync(simulatorBinary)) {
       return reject(new Error(simulatorBinary + ' does not exist'));
