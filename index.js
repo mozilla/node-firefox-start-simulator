@@ -53,35 +53,37 @@ function startSimulator(options) {
 }
 
 // Helper function to start multiple simulators with common default options
-startSimulator.all = function (commonOptions) {
-  return function (simulators) {
+startSimulator.all = function(commonOptions) {
+
+  return function(simulators) {
 
     // findSimulators() output can include multiple emulators for the same
     // version. Filter that down to unique versions.
     var seenVersions = {};
-    var uniqueVersionSimulators = simulators.filter(function (simulator) {
+    var uniqueVersionSimulators = simulators.filter(function(simulator) {
       var key = simulator.version;
       if (key in seenVersions) {
         return false;
-      } else {
-        seenVersions[key] = true;
-        return true;
       }
+      seenVersions[key] = true;
+      return true;
     });
 
     // Start all the simulators, using the common options for each.
-    return Promise.all(uniqueVersionSimulators.map(function (simulator) {
+    return Promise.all(uniqueVersionSimulators.map(function(simulator) {
       var options = {};
-      for (var key in commonOptions) {
+      var key;
+      for (key in commonOptions) {
         options[key] = commonOptions[key];
       }
-      for (var key in simulator) {
+      for (key in simulator) {
         options[key] = simulator[key];
       }
       return startSimulator(options);
     }));
 
   };
+
 };
 
 // Find a simulator that matches the options

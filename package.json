@@ -12,8 +12,10 @@
   "devDependencies": {
     "gulp": "^3.8.10",
     "mocha": "^1.21.4",
-    "should": "^4.0.4",
-    "node-firefox-build-tools": "^0.1.0"
+    "mockery": "^1.4.0",
+    "node-firefox-build-tools": "^0.1.0",
+    "nodemock": "^0.3.4",
+    "should": "^4.0.4"
   },
   "scripts": {
     "gulp": "gulp",
