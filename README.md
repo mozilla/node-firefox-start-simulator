@@ -51,10 +51,32 @@ where `options` is a plain `Object` with any of the following:
 and `simulator` is an object containing:
 
 * `binary`: path to the simulator binary
+* 'bin': an alias to `binary`
 * `profile`: path to the simulator profile
 * `pid`: process id
 * `process`: the actual process object
 * `port`: the port where the simulator is listening for debugging connections
+
+There is also a `startSimulator.all()` utility to launch many simulators at once:
+
+```javascript
+startSimulator.all(options)(simulatorOptions)
+  .then(function(launchedSimulators) {
+    // launchedSimulators is a list of simulator objects
+  });
+```
+
+The `options` parameter here is the same as above - these options will be
+commonly applied to all the simulators launched. 
+
+The call to `startSimulator.all()` returns a function that takes a list of
+simulators and returns a Promise to launch them all.  The result of that
+Promise is `launchedSimulators`, a list of all the simulators that were
+launched.
+
+Note: This function returning a function may seem like a roundabout way to do
+things, but take a look at the examples below to see how this works with
+`findSimulators()` and other Promise-based APIs.
 
 ## Examples
 
@@ -69,6 +91,17 @@ startSimulator().then(function(simulator) {
   console.log('Error starting a simulator', err);
 });
 
+```
+
+### Start all simulators found on your system
+```javascript
+var findSimulators = require('node-firefox-find-simulators');
+var startSimulator = require('node-firefox-start-simulator');
+
+// startSimulator.all() returns a function that applies the common options to
+// all the simulators discovered by findSimulators()
+
+findSimulators.then(startSimulator.all({ detached: true }));
 ```
 
 Have a look at the `examples` folder for more!
