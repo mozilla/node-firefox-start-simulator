@@ -51,7 +51,7 @@ where `options` is a plain `Object` with any of the following:
 and `simulator` is an object containing:
 
 * `binary`: path to the simulator binary
-* 'bin': an alias to `binary`
+* `bin`: alias to `binary`
 * `profile`: path to the simulator profile
 * `pid`: process id
 * `process`: the actual process object
@@ -67,7 +67,7 @@ startSimulator.all(options)(simulatorOptions)
 ```
 
 The `options` parameter here is the same as above - these options will be
-commonly applied to all the simulators launched. 
+commonly applied to all the simulators launched.
 
 The call to `startSimulator.all()` returns a function that takes a list of
 simulators and returns a Promise to launch them all.  The result of that
@@ -94,6 +94,7 @@ startSimulator().then(function(simulator) {
 ```
 
 ### Start all simulators found on your system
+
 ```javascript
 var findSimulators = require('node-firefox-find-simulators');
 var startSimulator = require('node-firefox-start-simulator');
@@ -167,4 +168,3 @@ If you want to contribute to this module, it might be interesting to have a look
 ## History
 
 This is based on initial work on fxos-start by Nicola Greco.
-
