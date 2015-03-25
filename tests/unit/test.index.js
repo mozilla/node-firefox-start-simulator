@@ -143,8 +143,6 @@ module.exports = {
       test.done();
     }).then(function(results) {
 
-      // console.log(JSON.stringify(results, null, ' '));
-
       // Ensure all the mocks were called, and with the expected parameters
       test.ok(mocked.assert());
 
@@ -181,12 +179,6 @@ module.exports = {
     });
 
   },
-
-  /*
-  'startSimulator.all() launches only one simulator per unique version': function(test) {
-    test.done();
-  },
-  */
 
   setUp: function(done) {
     return done();
