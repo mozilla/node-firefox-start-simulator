@@ -68,7 +68,8 @@ module.exports = {
     // Mock portfinder.getPort that pulls from a series of test ports.
     var portsIdx = 0;
     mockery.registerMock('portfinder', {
-      getPort: function(callback) {
+      getPort: function(options, callback) {
+        test.equal(options.host, '127.0.0.1');
         callback(null, ports[portsIdx++]);
       }
     });

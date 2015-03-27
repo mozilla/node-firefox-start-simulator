@@ -118,7 +118,11 @@ function findAvailablePort(preferredPort) {
       portFinder.basePort = preferredPort;
     }
 
-    portFinder.getPort(function(err, port) {
+    portFinder.getPort({
+      // Ensure we're looking at localhost, rather than 0.0.0.0
+      // see: https://github.com/indexzero/node-portfinder/issues/13
+      host: '127.0.0.1'
+    }, function(err, port) {
       if (err) {
         reject(err);
       } else {
